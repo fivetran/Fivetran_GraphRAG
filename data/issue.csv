@@ -1,0 +1,2860 @@
+"id","created_at","updated_at","number","state","title","body","locked","closed_at","repository_id","user_id","milestone_id","pull_request","_fivetran_synced"
+"744933593","2020-11-17 17:23:35.000000 UTC","2021-03-17 19:10:11.000000 UTC","3","closed","Invoice Line Item is not guaranteed to be unique","https://github.com/fivetran/dbt_stripe/blob/d1ff90c165854fe7230397bafdcc5fb99d50db47/models/stripe.yml#L314
+
+From customer:
+The stripe connector has ingested the data and I run the dbt job and get an error that the invoice line item id is not unique. I look at the data and, sure enough, it is not unique.
+
+I email Stripe support. The long and the short of it is for invoice line items made before their 2019-12-03 API update the id field is not guaranteed to be unique. They told me that for items like this I really should be using the unique_id field for a unique id 🙄 .
+
+This can be identified by the prefix on the id. If it is sli_ it is old and potentially not unique and should use the unique_id field which is guaranteed unique and is prefixed with il_.
+
+I think this could be handled in the dbt module about how invoice_line_item_id is selected.","false","2021-03-17 19:10:10.000000 UTC","264264565","54283769",,"false","2024-08-07 21:37:16.230000 UTC"
+"747870641","2020-11-20 23:59:30.000000 UTC","2021-03-16 22:15:24.000000 UTC","4","closed","Questions","1. Dates are treated differently for ""payout"" balance movements vs. other types of balance movements. Why is this the case?
+
+Specifically, whilst other movements use the 'created_at' date we case the 'payout' balance movements to choose the 'available_on' date if available; if not, it's only then we revert to the 'created_at' date.
+
+2. We'd love to be able to capture monthly opening and closing balances for our Stripe accounts. How can we do that via the Fivetran Stripe connector?
+
+We had a look over the same daily_overview.sql as referenced above and this line stand out:
+daily_balance_transactions.daily_net_activity + daily_balance_transactions.total_gross_payout_amount)/100.0 as daily_end_balance
+Both the daily_net_activity and total_gross_payout_amount totals look to me like outgoings, so if this is determined as the daily_end_balance what are they subtracted from to begin with?
+
+Or are we saying that we provide this data in the modelled table as the total outgoing balance and, along with the data like total_sales/total_refunds, our clients can then run further models on top of these to understand balances across their accounts?
+","false","2021-03-16 22:15:24.000000 UTC","264264565","54283769",,"false","2024-08-07 21:37:13.853000 UTC"
+"747880282","2020-11-21 00:32:43.000000 UTC","2021-03-17 19:09:58.000000 UTC","5","closed","improvements","https://github.com/dataform-co/dataform-fivetran-stripe/commit/1ac7ba3bdd176678170596cc77e5c73d857a29bd
+
+https://github.com/dataform-co/dataform-fivetran-stripe/commit/b400c22dddc6bbcfab61b6d533d63d71b8bd3a13","false","2021-03-17 19:09:58.000000 UTC","264264565","54283769",,"false","2024-08-07 21:37:15.960000 UTC"
+"1044921505","2021-11-04 15:57:39.000000 UTC","2021-11-04 18:11:55.000000 UTC","21","closed","Feature/customer metadata","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Fivetran created PR
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package -->
+Pass down customer metadata properties to the `customer_overview` model from the stripe source `stg_stripe__customer` package. Update readme to include variable info from the source readme.
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that -->
+<!--- Mark yes or no (eg. [x] Yes). If yes, link the issue. -->
+- [ ] Yes (please provide breaking change details below.)
+- [x] No  (please provide explanation how the change is non breaking below.)
+Adding optional additional fields
+
+**Is this PR in response to a previously created Issue**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- Mark yes or no (eg. [x] Yes). If yes, link the issue. -->
+- [x] Yes,  https://github.com/fivetran/dbt_stripe_source/issues/29
+https://github.com/fivetran/dbt_stripe/issues/20
+
+- [ ] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] CircleCi). --> 
+- [x] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [ ] Other (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+- [x] BigQuery
+- [ ] Redshift
+- [ ] Snowflake
+- [ ] Postgres
+- [ ] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2021-11-04 18:11:52.000000 UTC","264264565","91097070",,"true","2024-08-07 21:37:27.486000 UTC"
+"2084423760","2024-01-16 16:48:14.000000 UTC","2024-02-08 15:34:39.000000 UTC","73","closed","feature/quickstart-yml-addition","Small PR to add quickstart.yml to be properly parsed by the Quickstart automation.
+
+As this is just an addition of the quickstart.yml, there is no need for a new release or version bump.","false","2024-02-08 15:34:36.000000 UTC","264264565","74217849",,"true","2024-08-07 21:38:27.843000 UTC"
+"2085728869","2024-01-17 09:05:28.000000 UTC","2024-01-17 22:07:31.000000 UTC","74","closed","[Question] Custom metadata column don't use alias feature","### Is there an existing issue for this?
+
+- [X] I have searched the existing issues
+
+### Describe the issue
+
+Following https://github.com/fivetran/dbt_stripe/issues/65 I am trying to add a column from the metadata which already exists in the table.
+
+we have `currency` in the metadata that we want to extract.
+Adding it to the var:
+```
+vars:
+  stripe__invoice_metadata: ['amounts', 'currency']
+```
+Results an issue:
+```
+15:45:04  Database Error in model stg_stripe__invoice (models/stg_stripe__invoice.sql)
+15:45:04    column name ""currency"" is duplicated
+15:45:04    compiled Code at target/run/stripe_source/models/stg_stripe__invoice.sql
+```
+
+So I was trying to add the alias like in the doc:
+```
+vars:
+  stripe__invoice_metadata:
+    - name: amounts
+    - name: currency
+      alias: metadata_currency
+```
+and it fails with:
+```
+08:43:00  Database Error in model stripe__invoice_details (models/stripe__invoice_details.sql)
+08:43:00    syntax error at or near ""{""
+08:43:00    compiled Code at target/run/stripe/models/stripe__invoice_details.sql
+08:43:00
+```
+
+I guess that I'm not utilizing the alias feature in the code:
+```
+    {% if var('stripe__invoice_metadata',[]) %}
+      {% for metadata in var('stripe__invoice_metadata') %}
+          ,invoice.{{ metadata }} as invoice_{{ metadata }}
+      {% endfor %}
+    {% endif %}
+```
+
+Would love for some guidelines 
+
+### Relevant error log or model output
+
+_No response_
+
+### Expected behavior
+
+`currency` from the metadata appears in the final invoice table.
+
+### dbt Project configurations
+
+As described in https://github.com/fivetran/dbt_stripe/issues/65
+
+### Package versions
+
+As described in https://github.com/fivetran/dbt_stripe/issues/65
+
+### What database are you using dbt with?
+
+redshift
+
+### dbt Version
+
+As described in https://github.com/fivetran/dbt_stripe/issues/65
+
+### Additional Context
+
+_No response_
+
+### Are you willing to open a PR to help address this issue?
+
+- [ ] Yes.
+- [X] Yes, but I will need assistance and will schedule time during our [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance
+- [ ] No.","false","2024-01-17 22:07:31.000000 UTC","264264565","82036810",,"false","2024-08-07 21:38:27.046000 UTC"
+"2235807630","2024-04-10 14:54:59.000000 UTC","2024-04-10 14:54:59.000000 UTC","76","open","new branch deps","branch created to test upstream changes in the source model https://github.com/fivetran/dbt_stripe_source/pull/74","false",,"264264565","91097070",,"true","2024-08-07 21:38:30.702000 UTC"
+"1199264316","2022-04-11 01:20:32.000000 UTC","2022-04-11 18:52:34.000000 UTC","33","closed","updated subscription table to subscription_history","Pull Request
+**Are you a current Fivetran customer?** 
+No. I am a SI. Nachi Mehta, CEO, [OxWorks](https://oxw.io)
+
+**What change(s) does this PR introduce?** 
+Updates subscription table to match new [ERD](https://docs.google.com/presentation/d/1zyxgbaOjgBt3NsY0OfsiGsWDIefcBc-R1lHWlMltCYU/edit#slide=id.gd0264d4694_14_1) (subscription history)
+**Did you update the CHANGELOG?** 
+- [x] Yes
+
+**Does this PR introduce a breaking change?**
+- [x] Yes (please provide breaking change details below.)
+Anyone using this package with previous ERD/wrong source package will fail to build the subscription history table.
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+- [x] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+- [x] No 
+
+**How did you test the PR changes?** 
+- [x] Local (please provide additional testing details below)
+Set this up to run with newest fivetran package, synced April 6th 2022. I have the subscription history table with my company's live data, so I have the schemas to work with. I manually copied my updated version of the dbt_stripe_source package and instead of running `dbt deps` to grab it.
+<img width=""711"" alt=""Screen Shot 2022-04-11 at 11 09 36 AM"" src=""https://user-images.githubusercontent.com/1952466/162783890-52d1c9c8-1287-49f9-9c1e-e9d821042d15.png"">
+
+
+**Select which warehouse(s) were used to test the PR**
+- [ ] BigQuery
+- [ ] Redshift
+- [x] Snowflake
+- [ ] Postgres
+- [ ] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:ayooo:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2022-04-11 18:52:33.000000 UTC","264264565","1952466",,"true","2024-08-07 21:37:36.169000 UTC"
+"1200401179","2022-04-11 18:55:31.000000 UTC","2022-04-28 18:58:59.000000 UTC","34","closed","Bugfix/nachimehta subscription history","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Fivetran created PR built from the contributions of @nachimehta
+
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package and how to leverage this new feature. -->
+This PR adds documentation that highlights the `subscription_history` change that was introduced within the [Stripe Source PR](https://github.com/fivetran/dbt_stripe_source/pull/37). 
+
+Additionally, the main change within this PR will be the adjustment of the source package dependency.
+
+**Did you update the CHANGELOG?** 
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] Yes
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that will cause current package users' jobs to fail or require a `--full-refresh`? -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] Yes (please provide breaking change details below.)
+- [ ] No  (please provide an explanation as to how the change is non-breaking below.)
+
+Since the source PR will be a breaking change, this will also be breaking.
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] Yes, Issue/Feature [dbt_stripe_source #37]((https://github.com/fivetran/dbt_stripe_source/pull/37))
+- [ ] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] CircleCi). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [X] Local (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] BigQuery
+- [X] Redshift
+- [X] Snowflake
+- [X] Postgres
+- [ ] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+💇‍♀️ 
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2022-04-28 18:58:59.000000 UTC","264264565","74217849",,"true","2024-08-07 21:37:40.667000 UTC"
+"1053954498","2021-11-15 18:02:54.000000 UTC","2022-02-25 21:40:59.000000 UTC","22","closed","BUG - date_add does not exist","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Peter, Humi :)
+
+**Describe the bug**
+<!--- A clear and concise description of what the bug is. -->
+Might just be me misusing but:
+
+On model stripe__balance_transactions getting error:
+
+`Postgres error: function pg_catalog.date_add(""unknown"", integer, timestamp with time zone) does not exist
+`
+
+Weird because dbt_utils was properly installed 
+
+```
+Installing dbt-labs/dbt_utils@0.7.4
+  Installed from version 0.7.4
+  Up to date!
+```
+
+**Steps to reproduce**
+1. Add fivetran/stripe version 0.5.1 to packages.yml
+2. dbt deps
+3. dbt run --models stripe
+
+**Expected behavior**
+<!--- A clear and concise description of what you expected to happen. -->
+
+**Project variables configuration**
+<!--- Copy and paste the contents of your `dbt_project.yml` file below. -->
+```
+# Name your project! Project names should contain only lowercase characters
+# and underscores. A good package name should reflect your organization's
+# name or the intended use of these models
+name: 'my_new_project'
+version: '0.20.2'
+config-version: 2
+
+# This setting configures which ""profile"" dbt uses for this project.
+profile: 'default'
+
+# These configurations specify where dbt should look for different types of files.
+# The `source-paths` config, for example, states that models in this project can be
+# found in the ""models/"" directory. You probably won't need to change these!
+source-paths: [""models""]
+analysis-paths: [""analysis""]
+test-paths: [""tests""]
+data-paths: [""data""]
+macro-paths: [""macros""]
+snapshot-paths: [""snapshots""]
+
+target-path: ""target""  # directory which will store compiled SQL files
+clean-targets:         # directories to be removed by `dbt clean`
+    - ""target""
+    - ""dbt_modules""
+
+vars:
+    stripe_schema: landing_stripe
+    stripe_database: warehouse
+    stripe_timezone: ""America/Toronto""
+
+# Configuring models
+# Full documentation: https://docs.getdbt.com/docs/configuring-models
+
+# In this example config, we tell dbt to build all models in the example/ directory
+# as tables. These settings can be overridden in the individual model files
+# using the `{{ config(...) }}` macro.
+models:
+  my_new_project:
+      # Applies to all files under models/example/
+      example:
+          materialized: view
+  stripe:
+    +schema: _stripe
+  stripe_source:
+    +schema: _stripe_source
+
+```
+
+**Package Version**
+<!---Copy and paste the contents of your `packages.yml` file below.-->
+```packages:
+  - package: fivetran/stripe_source
+    version: 0.4.4
+  - package: fivetran/stripe
+    version: 0.5.1
+```
+
+**Warehouse**
+<!--- Which warehouse you are running dbt and this package against. -->
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+- [ ] BigQuery
+- [x] Redshift
+- [ ] Snowflake
+- [ ] Postgres
+- [ ] Databricks
+- [ ] Other (provide details below)
+
+**Additional context**
+<!--- Add any other context about the problem here.  --> 
+
+**Screenshots**
+<!--- If applicable, add screenshots to help explain your problem.  -->
+
+**Please indicate the level of urgency** 
+<!--- Is this impacting your reporting of a critical dashboard? Are you just testing this for the first time? Provide us context so that we can prioritize accordingly. -->
+Need to get solved by EOW
+**Are you interested in contributing to this package?** 
+<!--- Our packages are all open-source and we welcome contributions from the community! Are you interested in helping us fix this bug? -->
+- [ ] Yes, I can do this and open a PR for your review.
+- [x] Possibly, but I'm not quite sure how to do this. I'd be happy to do a live coding session with someone to get this fixed. 
+- [ ] No, I'd prefer if someone else fixed this.  I don't have the time and/or don't know what the root cause of the problem is.
+
+","false","2022-02-25 21:40:59.000000 UTC","264264565","57108096",,"false","2024-08-07 21:37:30.402000 UTC"
+"1500541167","2022-12-16 16:47:09.000000 UTC","2023-01-31 03:23:21.000000 UTC","56","closed","Feature/stripe updates q4 2022","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Internal
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package and how to leverage this new feature. -->
+Incoming stripe updates include the following:
+
+- Bring the source relation column downstream from the addition of the union feature
+- Downstream changes from introducing the `pricing` source table which may replace the plan table depending on whether customer migrated to the Price API (some column names have changed in `stripe__invoice_line_items`)
+- prefix variables with ""stripe__"" so they may be used globally
+- Add new models `stripe__invoice_details` and `stripe__account_daily_overview`
+- Update `stripe__invoice_line_items` with pricing data and `subscription_item_id`
+- Remove the `stripe__subscription_line_items` model
+
+For more info see PRs #54 and #55 
+
+**Did you update the CHANGELOG?** 
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that will cause current package users' jobs to fail or require a `--full-refresh`? -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+-  [x] Yes (please provide breaking change details below.)
+- [ ] No  (please provide an explanation as to how the change is non-breaking below.)
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes, Issue/Feature [link bug/feature number here]
+- [x] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] BuildKite). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] BuildKite <!--- BuildKite testing is only applicable to Fivetran employees. --> 
+- [ ] Local (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] BigQuery
+- [x] Redshift
+- [x] Snowflake
+- [x] Postgres
+- [x] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2023-01-31 03:23:17.000000 UTC","264264565","91097070",,"true","2024-08-07 21:38:02.042000 UTC"
+"1649555761","2023-03-31 15:13:56.000000 UTC","2023-04-05 15:59:33.000000 UTC","61","closed","mirror/source-package-updates-pr61","## PR Overview
+**This PR will address the following Issue/Feature:** This is a complimentary PR to the source package updates from [Source Package PR #61](https://github.com/fivetran/dbt_stripe_source/pull/61) in order to ensure documentation and under the hood changes remain consistent.
+
+**This PR will result in the following new package version:** `v0.10.1`
+<!--- Please add details around your decision for breaking vs non-breaking version upgrade. If this is a breaking change, were backwards-compatible options explored? -->
+This is only a documentation and under the hood update. No breaking changes will result in these updates.
+
+**Please detail what change(s) this PR introduces and any additional information that should be known during the review of this PR:**
+
+This PR only includes mirror changes from the source PR linked above in order to ensure documentation and testing is consistent across source and transform packages.
+
+## PR Checklist
+### Basic Validation
+Please acknowledge that you have successfully performed the following commands locally:
+- [X] dbt compile
+- [X] dbt run –full-refresh
+- [X] dbt run
+- [X] dbt test
+- [X] dbt run –vars (if applicable)
+
+Before marking this PR as “ready for review” the following have been applied:
+- [X] The appropriate issue has been linked and tagged
+- [X] You are assigned to the corresponding issue and this PR
+- [x] BuildKite integration tests are passing
+
+### Detailed Validation
+Please acknowledge that the following validation checks have been performed prior to marking this PR as “ready for review”:
+- [X] You have validated these changes and assure this PR will address the respective Issue/Feature.
+- [X] You are reasonably confident these changes will not impact any other components of this package or any dependent packages.
+- [X] You have provided details below around the validation steps performed to gain confidence in these changes.
+
+There were no code changes in this PR. As such, I am confident there is no validation necessary. However, I did test the upstream changes on this branch just to confirm and saw the basic validation steps were successful.
+
+### Standard Updates
+Please acknowledge that your PR contains the following standard updates:
+- Package versioning has been appropriately indexed in the following locations:
+    - [X] indexed within dbt_project.yml
+    - [X] indexed within integration_tests/dbt_project.yml
+- [X] CHANGELOG has individual entries for each respective change in this PR
+    <!--- If there is a parallel upstream change, remember to reference the corresponding CHANGELOG as an individual entry.  -->
+- [X] README updates have been applied (if applicable)
+    <!--- Remember to check the following README locations for common updates. →
+        <!--- Suggested install range (needed for breaking changes) →
+        <!--- Dependency matrix is appropriately updated (if applicable) →
+        <!--- New variable documentation (if applicable) -->
+- [X] DECISIONLOG updates have been updated (if applicable)
+- [X] Appropriate yml documentation has been added (if applicable)
+
+### dbt Docs
+Please acknowledge that after the above were all completed the below were applied to your branch:
+- [x] docs were regenerated (unless this PR does not include any code or yml updates)
+
+### If you had to summarize this PR in an emoji, which would it be?
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+🪞 ","false","2023-04-05 15:59:25.000000 UTC","264264565","74217849",,"true","2024-08-07 21:38:13.487000 UTC"
+"1206769216","2022-04-18 07:29:34.000000 UTC","2022-04-28 15:25:11.000000 UTC","35","closed","[Bug] Timezone conversion doesn't work on postgres","### Is there an existing issue for this?
+
+- [X] I have searched the existing issues
+
+### Describe the issue
+
+When trying to set the timezone I get an error.
+
+PostgreSQL doesn't have a ```convert_timezone``` function. If you look at ```dbt_packages/dbt_utils/macros/cross_db_utils/current_timestamp.sql``` you will see that they use something like
+```({{ column }} at time zone '{{ var(""stripe_timezone"") }}')::{{dbt_utils.type_timestamp()}}``` instead
+
+### Relevant error log or model output
+
+```shell
+07:21:34  Database Error in model stripe__customer_overview (models/stripe__customer_overview.sql)
+07:21:34    function convert_timezone(unknown, timestamp without time zone) does not exist
+07:21:34    LINE 63:     convert_timezone('Sydney/Australia', created_at)
+07:21:34                 ^
+07:21:34    HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+07:21:34    compiled SQL at target/run/stripe/models/stripe__customer_overview.sql
+07:21:34
+```
+
+
+### Expected behavior
+
+No error and timezones should be converted
+
+### dbt Project configurations
+
+vars:
+  using_invoices: false
+  using_subscriptions: false
+  using_credit_notes: false
+  stripe_timezone: ""Sydney/Australia""
+  stripe_schema: stripe_load
+  stripe_database: dwh_prod
+
+### Package versions
+
+packages:
+  - package: fivetran/stripe_source
+    version: ["">=0.5.0"", ""<0.6.0""]
+
+  - package: fivetran/stripe
+    version: ["">=0.6.0"", ""<0.7.0""]
+
+
+### What database are you using dbt with?
+
+postgres
+
+### dbt Version
+
+nstalled version: 1.0.4
+   latest version: 1.0.4
+
+Up to date!
+
+Plugins:
+  - postgres: 1.0.4 - Up to date!
+
+
+### Additional Context
+
+_No response_
+
+### Are you willing to open a PR to help address this issue?
+
+- [X] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during our [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance
+- [ ] No.","false","2022-04-28 15:24:33.000000 UTC","264264565","42590",,"false","2024-08-07 21:37:40.166000 UTC"
+"1207523587","2022-04-18 22:39:24.000000 UTC","2022-04-28 15:24:34.000000 UTC","36","closed","Fix timezone support on postgres. Fixes #35","Pull Request
+**Are you a current Fivetran customer?** 
+Yes. John Ferlito, Cofounder, Gladly Pty Ltd
+
+**What change(s) does this PR introduce?** 
+Fixes issues with time zone conversion for postgres
+
+**Did you update the CHANGELOG?** 
+- [x] Yes
+
+**Does this PR introduce a breaking change?**
+- [ ] Yes (please provide breaking change details below.)
+- [x] No  (please provide an explanation as to how the change is non-breaking below.)
+
+If someone on postgres has a timezone set then the package fails to work anyway.
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+- [x] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+- [x] Yes, Issue/Feature #35 
+- [ ] No 
+
+**How did you test the PR changes?** 
+- [ ] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [x] Local (please provide additional testing details below)
+Used the package on my local model and I can now use the stripe module with atimezone set
+
+**Select which warehouse(s) were used to test the PR**
+- [ ] BigQuery
+- [ ] Redshift
+- [ ] Snowflake
+- [x] Postgres
+- [ ] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+:penguin: ","false","2022-04-28 15:24:34.000000 UTC","264264565","42590",,"true","2024-08-07 21:37:37.627000 UTC"
+"911548885","2021-06-04 14:21:40.000000 UTC","2021-06-07 05:59:45.000000 UTC","14","closed","Zendesk reference","https://github.com/fivetran/dbt_stripe/blob/0fca4f35a333187953443f03bdcf323c1dc77ecf/dbt_project.yml#L17-L30
+
+Could this be correct referencing zendesk inside dbt_stripe repo?","false","2021-06-04 21:36:57.000000 UTC","264264565","13113025",,"false","2024-08-07 21:37:22.622000 UTC"
+"911576378","2021-06-04 14:52:13.000000 UTC","2021-06-04 21:33:49.000000 UTC","15","closed","variable fixes","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Internal PR
+
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package -->
+This PR fixes the variables defined within the `dbt_project.yml` which had a Zendesk reference instead of Stripe. Additionally, this PR changes the staging model calls from references to variables (this was why the package was working previously with incorrect variable configs, because we never actually called the variables). This update was to ensure the variables are accurate and used in accordance with our standards.
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that -->
+<!--- Mark yes or no (eg. [x] Yes). If yes, link the issue. -->
+- [ ] Yes (please provide breaking change details below.)
+- [X] No  (please provide explanation how the change is non breaking below.)
+This PR only changes the variables to correctly reference the Stripe source models and has the transform models reference them.
+
+**Is this PR in response to a previously created Issue**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- Mark yes or no (eg. [x] Yes). If yes, link the issue. -->
+- [X] Yes, Issue #14 
+- [ ] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] CircleCi). --> 
+- [X] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [ ] Other (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+- [X] BigQuery
+- [X] Redshift
+- [X] Snowflake
+- [ ] Postgres
+- [ ] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:bowtie:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2021-06-04 18:30:12.000000 UTC","264264565","74217849",,"true","2024-08-07 21:37:21.213000 UTC"
+"914743803","2021-06-08 10:06:05.000000 UTC","2021-06-11 15:24:30.000000 UTC","16","closed","BUG - Unneeded `order by`s reduce performance","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Yes, Mark MacArdle, data engineer at Bought By Many.
+
+
+**Describe the bug**
+<!--- A clear and concise description of what the bug is. -->
+Most of the cleaned tables end with an order by (eg `stripe__balance_transactions.sql`). Ordering is an expensive operation but it won't be retained when users query the table. As it doesn't add anything the ordering should be removed.
+
+**Steps to reproduce**
+Look at the queries in the models folder.
+
+**Package Version**
+<!---Copy and paste the contents of your `packages.yml` file below.-->
+0.4.1
+
+**Please indicate the level of urgency** 
+<!--- Is this impacting your reporting of a critical dashboard? Are you just testing this for the first time? Provide us context so that we can prioritize accordingly. -->
+Very low
+
+**Are you interested in contributing to this package?** 
+<!--- Our packages are all open-source and we welcome contributions from the community! Are you interested in helping us fix this bug? -->
+- [x] Yes, I can do this and open a PR for your review.
+- [ ] Possibly, but I'm not quite sure how to do this. I'd be happy to do a live coding session with someone to get this fixed. 
+- [ ] No, I'd prefer if someone else fixed this.  I don't have the time and/or don't know what the root cause of the problem is.
+
+","false","2021-06-11 15:24:30.000000 UTC","264264565","26261732",,"false","2024-08-07 21:37:25.636000 UTC"
+"914746941","2021-06-08 10:08:08.000000 UTC","2021-06-09 20:29:25.000000 UTC","17","closed","improvement: remove order bys","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Yes, Mark MacArdle, data engineer at Bought By Many.
+
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package -->
+Performance improvement by removing `order by`s.
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that -->
+<!--- Mark yes or no (eg. [x] Yes). If yes, link the issue. -->
+- [ ] Yes (please provide breaking change details below.)
+- [ ] No  (please provide explanation how the change is non breaking below.)
+
+**Is this PR in response to a previously created Issue**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- Mark yes or no (eg. [x] Yes). If yes, link the issue. -->
+- [x] Yes, Issue #16 
+- [ ] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] CircleCi). --> 
+- [ ] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [ ] Other (please provide additional testing details below)
+Haven't yet as change was pretty trivial
+","false","2021-06-09 20:29:25.000000 UTC","264264565","26261732",,"true","2024-08-07 21:37:22.834000 UTC"
+"916296000","2021-06-09 14:48:55.000000 UTC","2021-06-11 15:12:52.000000 UTC","18","closed","Incorporate Stripe timezones in reporting","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Dylan, Fivetran
+
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package -->
+This PR aims to bring this package closer in line with reporting metrics that can be seen in the Stripe UI. The issue is that when aggregating to day, week, month or quarter, Stripe converts the timestamps from UTC to whatever timezone the user prefers. This PR makes the same transformations.
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that -->
+<!--- Mark yes or no (eg. [x] Yes). If yes, link the issue. -->
+- [ ] Yes (please provide breaking change details below.)
+- [x] No  (please provide explanation how the change is non breaking below.)
+New functionality only comes into play when a new variable is set. Otherwise, nothing should change.
+
+**Is this PR in response to a previously created Issue**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- Mark yes or no (eg. [x] Yes). If yes, link the issue. -->
+- [x] Yes, Issue [#12]
+- [ ] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] CircleCi). --> 
+- [x] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [ ] Other (please provide additional testing details below)
+","false","2021-06-11 15:12:27.000000 UTC","264264565","10001014",,"true","2024-08-07 21:37:24.080000 UTC"
+"1657715600","2023-04-06 16:22:32.000000 UTC","2023-04-06 16:43:01.000000 UTC","62","closed","Setting up Fivetran Transformations","In this PR we're updating the DBT project to enable the Fivetran Transformations feature:
+
+- **DBT CLI configuration:** adding the profiles path to the dbt_project file.
+- **Fivetran Transformations requirements:** the [deployment file is required](https://fivetran.com/docs/transformations/faq/use-deployment-file) for this feature to work. It schedules DBT commands that will be orchestrated by Fivetran.","false","2023-04-06 16:43:01.000000 UTC","264264565","73370842",,"true","2024-08-07 21:38:15.392000 UTC"
+"1954777300","2023-10-20 17:52:20.000000 UTC","2024-05-27 23:57:03.000000 UTC","70","closed","[Feature] Stripe report folder should be renamed to Stripe financial reports","### Is there an existing feature request for this?
+
+- [X] I have searched the existing issues
+
+### Describe the Feature
+
+A minor minor syntax thing our PM suggested-- the correct name of these reports should be Stripe financial reports. Let's make this edit in our next batch of updates
+
+### Describe alternatives you've considered
+
+_No response_
+
+### Are you interested in contributing this feature?
+
+- [X] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during your [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance.
+- [ ] No.
+
+### Anything else?
+
+_No response_","false","2024-05-27 23:57:03.000000 UTC","264264565","91097070",,"false","2024-08-07 21:38:34.598000 UTC"
+"1363816196","2022-09-06 21:07:30.000000 UTC","2022-12-20 21:37:20.000000 UTC","42","closed","[Feature] Databricks Support","### Is there an existing feature request for this?
+
+- [X] I have searched the existing issues
+
+### Describe the Feature
+
+The Stripe package currently does not support Databricks as a destination. We will want to make any necessary changes to this package (and the source) to ensure the package works on a Databricks destination.
+
+Additionally, this will be a good update to also incorporate the PR #38 updates as Databricks support should be a breaking change.
+
+### Describe alternatives you've considered
+
+Not using Databricks which is not an ideal workaround.
+
+### Are you interested in contributing this feature?
+
+- [X] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during your [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance.
+- [ ] No.
+
+### Anything else?
+
+_No response_","false","2022-12-20 21:37:20.000000 UTC","264264565","74217849",,"false","2024-08-07 21:37:55.212000 UTC"
+"1216305650","2022-04-26 18:07:24.000000 UTC","2022-04-28 15:24:39.000000 UTC","37","closed","Bug/postgres timezone","Pull Request
+**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Internal, merged PR https://github.com/fivetran/dbt_stripe/pull/36 and added stripe_timezone var to invoke circle ci test in postgres
+
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package and how to leverage this new feature. -->
+Customer updated `date_timezone` macro to include postgres fix 
+
+**Did you update the CHANGELOG?** 
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that will cause current package users' jobs to fail or require a `--full-refresh`? -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes (please provide breaking change details below.)
+- [x] No  (please provide an explanation as to how the change is non-breaking below.)
+Fix for only those using postgres.
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes, Issue/Feature https://github.com/fivetran/dbt_stripe/issues/35
+- [ ] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] CircleCi). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [x] Local (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] BigQuery
+- [x] Redshift
+- [x] Snowflake
+- [x] Postgres
+- [x] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2022-04-28 15:24:31.000000 UTC","264264565","91097070",,"true","2024-08-07 21:37:38.533000 UTC"
+"1959764737","2023-10-24 17:44:47.000000 UTC","2023-10-25 03:08:32.000000 UTC","71","open","Subscription updates","**Please provide your name and company**
+
+**Link the issue/feature request which this PR is meant to address**
+<!--- If an issue was not created, please create one first so we may discuss the PR prior to opening one. -->
+
+**Detail what changes this PR introduces and how this addresses the issue/feature request linked above.**
+
+**How did you validate the changes introduced within this PR?**
+
+**Which warehouse did you use to develop these changes?**
+
+**Did you update the CHANGELOG?**
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)**
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+
+**PR Template** 
+- [Community Pull Request Template](?expand=1&template=pull_request_template.md) (default)
+
+- [Maintainer Pull Request Template](?expand=1&template=maintainer_pull_request_template.md) (to be used by maintainers)
+","false",,"264264565","116037909",,"true","2024-08-07 21:38:25.054000 UTC"
+"1371444129","2022-09-13 13:17:07.000000 UTC","2023-01-31 21:46:46.000000 UTC","43","closed","How to adjust models?","After changing the metadata variables I saw not all columns are showing in the destination transformation schema. So I went and edit them myself in dbt_packages/stripe/models. however it did not do anything, not even with `--full-refresh`. I guess this is somewhat related to `dbt_packages` being in `.gitignore`. 
+Am I allowed to change it? if I change it - will it work?
+
+I don't want to break stuff.
+
+The changes I've done to the dbt_project.yml are:
++  stripe__charge_metadata: ['extras', 'product', 'userid'] 
++  stripe__invoice_metadata: ['extras', 'product', 'userid'] 
++  stripe__subscription_metadata: ['extras', 'userid'] 
++  stripe__customer_metadata: ['userid'] ","false","2023-01-31 21:46:46.000000 UTC","264264565","82036810",,"false","2024-08-07 21:38:07.974000 UTC"
+"1371618240","2022-09-13 15:14:21.000000 UTC","2022-09-19 16:21:15.000000 UTC","44","closed","feature/databricks-compatibility","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Fivetran created PR
+
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package and how to leverage this new feature. -->
+Databricks compatibility 🧱
+
+**Did you update the CHANGELOG?** 
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] Yes
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that will cause current package users' jobs to fail or require a `--full-refresh`? -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes (please provide breaking change details below.)
+- [X] No  (please provide an explanation as to how the change is non-breaking below.)
+
+Same as the source, since there was a breaking change only a while ago it would not make sense to do a breaking change here as well.
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] Yes, Issue/Feature #42 
+- [ ] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] CircleCi). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [X] Local (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] BigQuery
+- [X] Redshift
+- [X] Snowflake
+- [X] Postgres
+- [X] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+🧱
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2022-09-19 16:21:13.000000 UTC","264264565","74217849",,"true","2024-08-07 21:37:45.456000 UTC"
+"1081574062","2021-12-15 22:29:50.000000 UTC","2021-12-22 22:29:28.000000 UTC","23","closed","[MagicBot] Bumping package version","
+    #### This pull request was created automatically 🎉
+
+    Before merging this PR:
+    - [ ] Verify that all the tests pass.
+    - [ ] Tag a release 
+    ","false","2021-12-22 22:29:26.000000 UTC","264264565","74217849",,"true","2024-08-07 21:37:29.191000 UTC"
+"1679110294","2023-04-21 21:14:39.000000 UTC","2023-05-10 20:03:22.000000 UTC","63","closed","Package Updater PR","This pull request was created automatically 🎉:
+- [x] Ensure `.buildkite/scripts/run_models.sh` has the new run-operation line
+- [ ] Update the package version (currently `v0.UPDATE.UPDATE`) in the `CHANGELOG`
+- [ ] Update project versions in the `dbt_project.yml` and `integration_tests/dbt_project.yml` files
+- [x] Update Step 2 of the `README` to align either with this [source package example](https://github.com/fivetran/dbt_shopify_source/tree/main#step-2-install-the-package-skip-if-also-using-the-shopify-transformation-package) or this [transform package example](https://github.com/fivetran/dbt_shopify#step-2-install-the-package)
+    ","false","2023-05-10 20:03:18.000000 UTC","264264565","65564846",,"true","2024-08-07 21:38:16.633000 UTC"
+"1383635883","2022-09-23 11:01:52.000000 UTC","2023-01-31 20:17:58.000000 UTC","45","closed","[Bug] Errors when extracting JSON values","### Is there an existing issue for this?
+
+- [X] I have searched the existing issues
+
+### Describe the issue
+
+I'm trying to use the metadata list variables, e.g. `stripe__plan_metadata`, to specify the fields to extract but I'm seeing two distinct error pattens:
+
+ - For fields with a full stop, e.g. ` feature.id`, the package tries to use the same value as a column name. This fails because column names can't contain `.`.
+- I have another field called `set`. Snowflake expects this to set a [session variable](https://docs.snowflake.com/en/sql-reference/sql/set.html), which causes an error.
+
+### Relevant error log or model output
+
+```shell
+-- plan.id
+10:51:08  Database Error in model stg_stripe__plan (models/stg_stripe__plan.sql)
+10:51:08    001003 (42000): SQL compilation error:
+10:51:08    syntax error line 224 at position 21 unexpected '.'.
+10:51:08    syntax error line 227 at position 24 unexpected '('.
+10:51:08    syntax error line 227 at position 51 unexpected ','.
+10:51:08    syntax error line 227 at position 53 unexpected ''feature.id''.
+10:51:08    syntax error line 229 at position 11 unexpected 'as'.
+10:51:08    compiled SQL at target/run/stripe_source/models/stg_stripe__plan.sql
+
+-- set
+10:48:51  Database Error in model stg_stripe__plan (models/stg_stripe__plan.sql)
+10:48:51    001003 (42000): SQL compilation error:
+10:48:51    syntax error line 259 at position 14 unexpected 'set'.
+10:48:51    compiled SQL at target/run/stripe_source/models/stg_stripe__plan.sql
+```
+
+
+### Expected behavior
+
+Ideally, columns should be created from the metadata with valid names. However, I imagine there are a ton of corner cases regarding character substitution and reserved keywords. 
+
+An alternative approach would be to pass metadata fields to the final models without modification. This would let users parse the values in a separate view.
+
+### dbt Project configurations
+
+vars:
+  stripe__plan_metadata:
+    - archived
+    - feature.handle
+    - feature.id
+    - feature.type
+    - generated
+    - limit
+    - plan.id
+    - plan.handle
+    - set
+    - version
+
+### Package versions
+
+packages:
+  - package: fivetran/stripe
+    version: 0.7.1
+
+### What database are you using dbt with?
+
+snowflake
+
+### dbt Version
+
+Core:
+  - installed: 1.2.1
+  - latest:    1.2.1 - Up to date!
+
+Plugins:
+  - snowflake: 1.2.0 - Up to date!
+
+### Additional Context
+
+_No response_
+
+### Are you willing to open a PR to help address this issue?
+
+- [X] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during our [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance
+- [ ] No.","false","2023-01-31 20:17:58.000000 UTC","264264565","16354488",,"false","2024-08-07 21:38:07.577000 UTC"
+"1235727576","2022-05-13 21:23:27.000000 UTC","2022-09-19 16:22:02.000000 UTC","38","closed","packaage updates","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Fivetran create PR
+
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package and how to leverage this new feature. -->
+This PR applies the package standardization updates to the package discussed within the team to be more consistent in our documentation and style.
+
+**Did you update the CHANGELOG?** 
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] Yes
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that will cause current package users' jobs to fail or require a `--full-refresh`? -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] Yes (please provide breaking change details below.)
+- [ ] No  (please provide an explanation as to how the change is non-breaking below.)
+
+This won't necessarily be breaking. However, this will be a major change to the look and feel of our package. Therefore, I believe this should be a breaking change.
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes, Issue/Feature [link bug/feature number here]
+- [X] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] CircleCi). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [ ] Local (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [X] BigQuery
+- [X] Redshift
+- [X] Snowflake
+- [X] Postgres
+- [ ] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+📜 
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2022-09-19 16:22:02.000000 UTC","264264565","74217849",,"true","2024-08-07 21:37:47.111000 UTC"
+"1838674502","2023-08-07 04:51:52.000000 UTC","2023-08-09 06:35:51.000000 UTC","66","open","[Feature] DuckDB Support","### Is there an existing feature request for this?
+
+- [X] I have searched the existing issues
+
+### Describe the Feature
+
+I propose adding support for the DuckDB database engine in the `fivetran/stripe` package. DuckDB is an in-memory analytical database that is gaining popularity due to its speed and efficiency. 
+
+However, when trying to use the `fivetran/stripe` package with the `dbt-duckdb` adapter, I encountered an error related to the `+` operator not being supported for adding an interval to a string in DuckDB, similar to Postgres.
+
+### Describe alternatives you've considered
+
+_No response_
+
+### Are you interested in contributing this feature?
+
+- [ ] Yes.
+- [x] Yes, but I will need assistance and will schedule time during your [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance.
+- [ ] No.
+
+### Anything else?
+
+https://github.com/jwills/dbt-duckdb","false",,"264264565","2250471",,"false","2024-08-07 21:38:19.237000 UTC"
+"1838686505","2023-08-07 05:02:30.000000 UTC","2023-08-09 14:36:14.000000 UTC","67","open","Add 'duckdb' support","**Please provide your name and company**
+
+Eric Martinez, 80/20 Jiu-Jitsu
+
+**Link the issue/feature request which this PR is meant to address**
+<!--- If an issue was not created, please create one first so we may discuss the PR prior to opening one. -->
+#66 
+
+**Detail what changes this PR introduces and how this addresses the issue/feature request linked above.**
+I encountered an error related to the `+` operator not being supported for adding an interval to a string in DuckDB.
+
+The specific issue arises in the `int_stripe__date_spine.sql` model, where the `dbt.dateadd` function tries to add 1 day to the `last_date_adjust` variable, which is a string. This operation is not supported in DuckDB, causing the model to fail.
+
+Since DuckDB uses Postgres syntax, we can simply handle it in the same way as Postgres is handled.
+
+**How did you validate the changes introduced within this PR?**
+Validated locally. Additional changes may be required.
+
+**Which warehouse did you use to develop these changes?**
+DuckDB.
+
+**Did you update the CHANGELOG?**
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)**
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+
+**PR Template** 
+- [Community Pull Request Template](?expand=1&template=pull_request_template.md) (default)
+
+- [Maintainer Pull Request Template](?expand=1&template=maintainer_pull_request_template.md) (to be used by maintainers)
+","false",,"264264565","2250471",,"true","2024-08-07 21:38:19.636000 UTC"
+"951895103","2021-07-23 21:03:27.000000 UTC","2021-07-28 14:56:38.000000 UTC","19","closed","[MagicBot] Bumping package version","
+    #### This pull request was created automatically 🎉
+
+    Before merging this PR:
+    - [ ] Verify that all the tests pass.
+    - [ ] Tag a release 
+    ","false","2021-07-28 14:56:36.000000 UTC","264264565","10001014",,"true","2024-08-07 21:37:26.129000 UTC"
+"1843997557","2023-08-09 20:54:01.000000 UTC","2023-08-15 15:47:05.000000 UTC","68","open","[Feature]  Be able to leverage package to create MRR reports ","### Is there an existing feature request for this?
+
+- [X] I have searched the existing issues
+
+### Describe the Feature
+
+Update daily overview model, or a more fitting model, to account for subscription-based transactions in order to build MRR reports on top of our package. 
+
+We need the invoice table in order to connect to the subscription table, which the daily overview model currently doesn't pull from. The closest model that would feed into an MRR report I'd say is the [invoice_line_item_details](https://fivetran.github.io/dbt_stripe/#!/model/model.stripe.stripe__invoice_line_item_details) model.
+
+It seems that the daily overview model amounts come from the balance transaction table. The way subscription data would be brought in would be: balance transaction > charge > invoice > subscription.  The most downstream models where some of them exist together is in the [balance transactions](https://fivetran.github.io/dbt_stripe/#!/model/model.stripe.stripe__balance_transactions) and [subscription details](https://fivetran.github.io/dbt_stripe/#!/model/model.stripe.stripe__subscription_details) .  But there isn't a model that ties all of those source tables together. 
+
+### Describe alternatives you've considered
+
+_No response_
+
+### Are you interested in contributing this feature?
+
+- [X] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during your [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance.
+- [ ] No.
+
+### Anything else?
+
+_No response_","false",,"264264565","91097070",,"false","2024-08-07 21:38:20.886000 UTC"
+"2288568980","2024-05-09 22:36:48.000000 UTC","2024-05-27 23:57:04.000000 UTC","77","closed","[Bug] update date_spine model to accommodate empty `stripe__balance_transactions`","### Is there an existing issue for this?
+
+- [X] I have searched the existing issues
+
+### Describe the issue
+
+Same issue as https://github.com/fivetran/dbt_quickbooks/issues/118
+
+We need to add `coalesces` both the `first_date` and `last_date` to ensure the [spine](https://github.com/fivetran/dbt_stripe/blob/main/models/intermediate/int_stripe__date_spine.sql) is not working with `Nonetype` values.
+
+### Relevant error log or model output
+
+```shell
+Database Error in model int_stripe__date_spine (models/intermediate/int_stripe__date_spine.sql)
+
+Invalid datetime string ""None""
+```
+
+
+### Expected behavior
+
+Date spine and its downstream models should not fail
+
+the daily overview model includes non-balance-transaction data so it's still valuable to have even with no balance transaction records
+
+### dbt Project configurations
+
+na
+
+### Package versions
+
+na
+
+### What database are you using dbt with?
+
+postgres, redshift, snowflake, bigquery, databricks
+
+### dbt Version
+
+na
+
+### Additional Context
+
+_No response_
+
+### Are you willing to open a PR to help address this issue?
+
+- [X] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during our [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance
+- [ ] No.","false","2024-05-27 23:57:04.000000 UTC","264264565","65564846",,"false","2024-08-07 21:38:35.943000 UTC"
+"1403442848","2022-10-10 16:36:17.000000 UTC","2023-01-31 20:14:47.000000 UTC","46","closed","[Feature] currency field to be pulled through to invoice_line_items","### Is there an existing feature request for this?
+
+- [X] I have searched the existing issues
+
+### Describe the Feature
+
+We are charging multiple currencies through our stripe account and the invoice_line_items table does not have the `currency` field propagated through, even though it is available in upstream models.
+
+Would it be sensible to include this?
+
+### Describe alternatives you've considered
+
+The alternative solution I see would be to join one of the tables like `balance_transactions` or `stg_stripe__fees` to `invoice_line_items` in our core models.
+
+### Are you interested in contributing this feature?
+
+- [X] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during your [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance.
+- [ ] No.
+
+### Anything else?
+
+_No response_","false","2023-01-31 20:14:47.000000 UTC","264264565","9105859",,"false","2024-08-07 21:38:07.153000 UTC"
+"811972415","2021-02-19 12:11:35.000000 UTC","2021-02-23 02:15:21.000000 UTC","6","closed","update required dbt version to allow v0.19.0","dbt v0.19.0 was released on Jan 27th but this package has the below line in it's `dbt_project.yml`
+
+```
+require-dbt-version: ["">=0.18.0"", ""<0.19.0""]
+```
+
+Be great if this could be updated to allow use of latest version of dbt.
+
+The Stripe source package would also need to be updated.","false","2021-02-23 02:15:21.000000 UTC","264264565","26261732",,"false","2024-08-07 21:37:12.045000 UTC"
+"1553040105","2023-01-23 12:49:41.000000 UTC","2023-02-01 17:00:04.000000 UTC","57","closed","Add table rename at the end of each refresh ","Some tables take a long time to refresh, like:
+
+```
+09:12:05  119 of 175 START table model cdp_stripe.stripe__invoice_line_items ............. [RUN]
+09:15:08  119 of 175 OK created table model cdp_stripe.stripe__invoice_line_items ........ [SELECT in 183.45s]
+```
+
+During this time - the table is not available to query in prod.
+One way to resolve this is to run in the end:
+
+```
+DROP TABLE IF EXISTS cdp_stripe.stripe__invoice_line_items_prod;
+ALTER TALBE cdp_stripe.stripe__invoice_line_items rename to cdp_stripe.stripe__invoice_line_items_prod;
+```
+
+Is there such a way to do it when each table is ready? ","false","2023-02-01 17:00:03.000000 UTC","264264565","82036810",,"false","2024-08-07 21:38:09.125000 UTC"
+"1405946157","2022-10-12 10:14:45.000000 UTC","2022-10-13 19:45:58.000000 UTC","47","closed","Adding the invoice.currency column to invoice_line_items","Pull Request
+**Are you a current Fivetran customer?** 
+Christopher Brandenburg, Gigs (gigs.com), Head of Data
+
+**What change(s) does this PR introduce?** 
+The `stripe__invoice_line_items.sql` model was missing the invoice's currency.
+
+The currency is available further upstream of the model in `stg_stripe__invoice` and I have added the field plus the description. 
+
+**Did you update the CHANGELOG?** 
+- [x] Yes
+
+**Does this PR introduce a breaking change?**
+- [ ] Yes (please provide breaking change details below.)
+- [ x] No  (please provide an explanation as to how the change is non-breaking below.)
+A new field is added to the most downstream model `stripe__invoice_line_items.sql`. If someone build models on top of this to bring in currency in a different approach this might cause issues.
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes, Issue/Feature [fivetran/dbt_stripe/issues/46]
+- [ ] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] CircleCi). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [x] Local (please provide additional testing details below)
+I ran the adjusted model locally.
+
+**Select which warehouse(s) were used to test the PR**
+- [x] BigQuery
+- [ ] Redshift
+- [ ] Snowflake
+- [ ] Postgres
+- [ ] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:cyclone:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2022-10-13 19:45:58.000000 UTC","264264565","9105859",,"true","2024-08-07 21:37:48.526000 UTC"
+"1408562080","2022-10-14 00:07:26.000000 UTC","2022-12-20 21:38:24.000000 UTC","48","closed","Updates for dbt-utils to dbt-core cross-db macro migration","This pull request was created automatically 🎉
+Before merging this PR (refer to Detailed Update Sheet 10/2022 for more information):
+- [x] Verify `dbt_project.yml` & `integration_tests/dbt_project.yml` versions are properly bumped
+- [x] Spot check for dispatch updates, `dbt_utils.macro` -> `dbt.macro` 
+- [x] Verify that `.circleci` directory has been removed
+- [x] Verify `integration_tests/requirements.txt` adapters have been updated to 1.2.0 and dbt-databricks is added
+- [x] Verify `.buildkite` directory has been added with the following: `hooks/pre-command`, `scripts/run_models.sh`, `pipeline.yml`
+- [x] Update `packages.yml`, will need to bump source package (FT utils should be bumped)
+- [x] Update `.buildkite/scripts/run_models.sh` with vars as applicable, if N/A then remove relevant lines from script
+- [x] Remove databricks block from `.buildkite/pipeline.yml` if package is incompatible
+- [x] Update schema names in `integration_tests/ci/sample.profiles.yml`
+- [x] Update ""spark"" strings where applicable
+- [x] Update `CHANGELOG` [template](https://github.com/fivetran/dbt_package_updater/blob/update/dbt-utils-crossdb-migration/CHANGELOG.md) and remove surrogate keys if not applicable to package
+- [x] Update `README` for dbt version badge, install package version range and dependencies for: Fivetran_utils, dbt-utils and source packages
+- [x] Regenerate docs
+- [x] Follow Instructions for adding Buildkite 
+- [x] Follow instructions for removing Circleci
+    ","false","2022-12-20 21:38:23.000000 UTC","264264565","94874400",,"true","2024-08-07 21:37:56.632000 UTC"
+"668159689","2020-07-29 21:10:25.000000 UTC","2020-07-30 16:28:21.000000 UTC","1","closed","Copyedit readme following Fivetran docs style","Fix grammar and spelling problems. Fix minor formatting issue. Reword for clarity.","false","2020-07-30 16:28:21.000000 UTC","264264565","54036902",,"true","2024-08-07 21:37:09.688000 UTC"
+"817549600","2021-02-26 17:51:01.000000 UTC","2021-03-16 16:49:18.000000 UTC","7","closed","correct typo in renaming of payout.arrival_date","A ""c"" was missing from ""expected"" in `payout_expected_arrival_date ` column name.
+
+Appreciate it may not be worth introducing what, for some, will be a breaking change just to correct this. I'm not actually using the column myself so it's only for tidiness I'm making this PR.","false","2021-03-16 16:49:17.000000 UTC","264264565","26261732",,"true","2024-08-07 21:37:12.300000 UTC"
+"2154513487","2024-02-26 15:53:57.000000 UTC","2024-03-06 18:04:59.000000 UTC","75","closed","add customer phone + remove deleted-customer filter ","## PR Overview
+**This PR will address the following Issue/Feature:**
+- https://github.com/fivetran/dbt_stripe_source/issues/71
+- https://github.com/fivetran/dbt_stripe_source/issues/70
+
+**This PR will result in the following new package version:**
+<!--- Please add details around your decision for breaking vs non-breaking version upgrade. If this is a breaking change, were backwards-compatible options explored? -->
+
+v0.12.0 because we are changing the output of the customer_overview model -- deleted customers are now included
+
+**Please detail what change(s) this PR introduces and any additional information that should be known during the review of this PR:**
+
+## PR Checklist
+### Basic Validation
+Please acknowledge that you have successfully performed the following commands locally:
+- [x] dbt compile
+- [x] dbt run –full-refresh
+- [x] dbt run
+- [x] dbt test
+- [ ] dbt run –vars (if applicable)
+
+Before marking this PR as ""ready for review"" the following have been applied:
+- [x] The appropriate issue has been linked and tagged
+- [x] You are assigned to the corresponding issue and this PR
+- [x] BuildKite integration tests are passing
+
+### Detailed Validation
+Please acknowledge that the following validation checks have been performed prior to marking this PR as ""ready for review"":
+- [x] You have validated these changes and assure this PR will address the respective Issue/Feature.
+- [x] You are reasonably confident these changes will not impact any other components of this package or any dependent packages.
+- [x] You have provided details below around the validation steps performed to gain confidence in these changes.
+<!--- Provide the steps you took to validate your changes below. -->
+
+see height task
+
+### Standard Updates
+Please acknowledge that your PR contains the following standard updates:
+- Package versioning has been appropriately indexed in the following locations:
+    - [x] indexed within dbt_project.yml
+    - [x] indexed within integration_tests/dbt_project.yml
+- [x] CHANGELOG has individual entries for each respective change in this PR
+    <!--- If there is a parallel upstream change, remember to reference the corresponding CHANGELOG as an individual entry.  -->
+- [x] README updates have been applied (if applicable)
+    <!--- Remember to check the following README locations for common updates. →
+        <!--- Suggested install range (needed for breaking changes) →
+        <!--- Dependency matrix is appropriately updated (if applicable) →
+        <!--- New variable documentation (if applicable) -->
+- [ ] DECISIONLOG updates have been updated (if applicable)
+- [x] Appropriate yml documentation has been added (if applicable)
+
+### dbt Docs
+Please acknowledge that after the above were all completed the below were applied to your branch:
+- [ ] docs were regenerated (unless this PR does not include any code or yml updates) -- WILL REGEN AFTER APPROVAL
+
+### If you had to summarize this PR in an emoji, which would it be?
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+📞 
+","false","2024-03-06 18:04:58.000000 UTC","264264565","65564846",,"true","2024-08-07 21:38:29.154000 UTC"
+"1713202702","2023-05-17 06:19:17.000000 UTC","2023-05-26 10:11:24.000000 UTC","64","open","[Bug] Error in tmp models due to metadata type json","### Is there an existing issue for this?
+
+- [X] I have searched the existing issues
+
+### Describe the issue
+
+Tmp models returns an error because cannot cast metadata dimension which is passed as json type instead of string.
+Metadata dimension used to be string but most recent Fivetran tables turned it into json.
+
+### Relevant error log or model output
+
+```shell
+Database Error in model stg_stripe__invoice_line_item_tmp (models/tmp/stg_stripe__invoice_line_item_tmp.sql)
+  Invalid cast from JSON to STRING at [94:26]
+  compiled Code at target/run/stripe_source/models/tmp/stg_stripe__invoice_line_item_tmp.sql
+```
+
+
+### Expected behavior
+
+The tmp models should cast metadata fields as string with `to_json()` function to convert the value to a JSON string before casting it to a string. 
+
+The package should generate the output tables without errors.
+
+### dbt Project configurations
+
+name: 'dbzaps'
+version: '1.0.0'
+config-version: 2
+
+# This setting configures which ""profile"" dbt uses for this project.
+profile: 'default'
+
+# These configurations specify where dbt should look for different types of files.
+# The `source-paths` config, for example, states that models in this project can be
+# found in the ""models/"" directory. You probably won't need to change these!
+model-paths: [""models""]
+analysis-paths: [""analyses""]
+test-paths: [""tests""]
+seed-paths: [""seeds""]
+macro-paths: [""macros""]
+snapshot-paths: [""snapshots""]
+
+target-path: ""target""  # directory which will store compiled SQL files
+clean-targets:         # directories to be removed by `dbt clean`
+  - ""target""
+  - ""dbt_packages""
+
+
+# Configuring models
+# Full documentation: https://docs.getdbt.com/docs/configuring-models
+
+models:
+  # Applies to all files under models/bilateralstimulation/
+  dbzaps:
+    bilateralstimulation:
+      staging:
+        materialized: view
+      intermediate:
+        materialized: ephemeral
+      marts:
+        +materialized: table
+
+
+# Fivetran Stripe | Bilateral Stimulation
+vars:
+    stripe_union_schemas: ['stripe_bilateralstimulation_de','stripe_bilateralstimulation_us','stripe_bilateralstimulation'] # use this if the data is in different schemas/datasets of the same database/project
+
+
+### Package versions
+
+packages:
+  - package: fivetran/stripe
+    version: 0.10.1
+
+### What database are you using dbt with?
+
+bigquery
+
+### dbt Version
+
+dbt Version: 1.4 (latest)
+
+### Additional Context
+
+<img width=""1200"" alt=""Screenshot 2023-05-17 at 08 15 29"" src=""https://github.com/fivetran/dbt_stripe/assets/62239865/f147cb58-bd78-42f5-821b-d6a963486cd7"">
+
+
+### Are you willing to open a PR to help address this issue?
+
+- [X] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during our [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance
+- [ ] No.","false",,"264264565","62239865",,"false","2024-08-07 21:38:17.722000 UTC"
+"1120801855","2022-02-01 15:03:37.000000 UTC","2022-03-24 15:06:50.000000 UTC","24","closed","BUG - Docs are out of date","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+The docs seem to only include the dbt_stripe_source model contents. Next time we push an update to this package we **need** to update the docs as well.","false","2022-03-24 15:06:50.000000 UTC","264264565","74217849",,"false","2024-08-07 21:37:34.530000 UTC"
+"1120843886","2022-02-01 15:31:25.000000 UTC","2023-01-31 22:08:41.000000 UTC","25","closed","BUG - subscription_id should be leveraged from Invoice, not Invoice_Lines","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Fivetran created Bug
+
+**Describe the bug**
+<!--- A clear and concise description of what the bug is. -->
+A customer noted in a [dbt Slack thread](https://getdbt.slack.com/archives/C01D1R2JLLA/p1643657209496889?thread_ts=1643656636.010939&cid=C01D1R2JLLA) that the `subscription_id` we leverage within the `stripe__subscription_details` model is not completely accurate and we should instead use the `subscription_id` within the Invoice table. After looking through the [Connector Release Notes](https://fivetran.com/docs/applications/stripe/changelog#april2021) it is clear that the `subscription_id` has been added to the Invoice table and should be leveraged here instead of the Invoice_Line table.
+
+When the `subscription_id` from the Invoice_Line table is used, there leaves room for empty aggregates in the final models. This update will resolve that. Additionally, the `subscription_id` is not included in the staging model for Invoice. So an update to the source package will be needed as well.
+
+**Expected behavior**
+<!--- A clear and concise description of what you expected to happen. -->
+There are no empty aggregates when a customer runs the package and inspects the final `stripe__subscription_details` model.
+","false","2023-01-31 22:08:41.000000 UTC","264264565","74217849",,"false","2024-08-07 21:38:08.690000 UTC"
+"1120858093","2022-02-01 15:41:27.000000 UTC","2023-01-31 21:48:09.000000 UTC","26","closed","FEATURE - Add More Context to the `using_invoice_line_sub_filter` variable","**Are you a Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Fivetran created FR
+
+**Is your feature request related to a problem? Please describe.**
+<!--- A clear and concise description of what the problem is. Ex. I'm always frustrated when [...] --> 
+The `using_invoice_line_sub_filter` can be somewhat confusing to understand for a first time user of this package. As highlighted by a customer within [dbt Slack](https://getdbt.slack.com/archives/C01D1R2JLLA/p1643657793265829?thread_ts=1643656636.010939&cid=C01D1R2JLLA) we should add more context within our README to help users understand _why_ this is included and _when_ to leverage the variable.
+
+**Describe the solution you'd like**
+<!--- A clear and concise description of what you want to happen. --> 
+The README has more context as to what the variable is and why it is included, and also when to use it. The slack thread linked above adds some good info that we should add.
+
+**Describe alternatives you've considered**
+<!--- A clear and concise description of any alternative solutions or features you've considered. --> 
+The current README state.
+","false","2023-01-31 21:48:08.000000 UTC","264264565","74217849",,"false","2024-08-07 21:38:08.216000 UTC"
+"2453945135","2024-08-07 17:06:28.000000 UTC","2024-08-07 17:06:29.000000 UTC","83","open","[Bug] Investigate discrepancy between line item amounts and invoice amounts","### Is there an existing issue for this?
+
+- [X] I have searched the existing issues
+
+### Describe the issue
+
+In our internal Stripe data, we've noticed that not all amounts in the line item table tie up to the amounts in the invoice table, when summed up to the invoice grain. So far it's been identified that it ties to a subscription amount found in the price_plan table.
+
+We should confirm whether this is something buggy with our data, or if this is indeed expected and we should make adjustments in our logic. 
+
+### Relevant error log or model output
+
+_No response_
+
+### Expected behavior
+
+Invoice line item amounts sum up to the amounts in the invoice table
+
+### dbt Project configurations
+
+na
+
+### Package versions
+
+na
+
+### What database are you using dbt with?
+
+other (mention it in ""Additional Context"")
+
+### dbt Version
+
+na
+
+### Additional Context
+
+_No response_
+
+### Are you willing to open a PR to help address this issue?
+
+- [X] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during our [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance
+- [ ] No.","false",,"264264565","91097070",,"false","2024-08-07 21:38:41.180000 UTC"
+"1121059951","2022-02-01 18:30:46.000000 UTC","2022-03-24 15:06:21.000000 UTC","27","closed","BUG - `most_recent_sale_date` using wrong aggregation","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Fivetran created Bug
+
+**Describe the bug**
+<!--- A clear and concise description of what the bug is. -->
+The calculation for `most_recent_sale_date` is currently using a `min` aggregation. However, it should instead be `max`.
+https://github.com/fivetran/dbt_stripe/blob/1815eb873fc7a6be03da158db5e4ee990f994e61/models/stripe__customer_overview.sql#L71-L74
+
+
+**Expected behavior**
+<!--- A clear and concise description of what you expected to happen. -->
+The `most_recent_sale_date` should be the max date.
+
+","false","2022-03-24 15:06:21.000000 UTC","264264565","74217849",,"false","2024-08-07 21:37:33.636000 UTC"
+"1121064129","2022-02-01 18:35:53.000000 UTC","2022-03-24 15:06:35.000000 UTC","28","closed","BUG - Customer Overview Model Should Include No Associate Customer Records","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Fivetran created bug.
+
+**Describe the bug**
+<!--- A clear and concise description of what the bug is. -->
+Currently, the `stripe__customer_overview` model is joining the transaction into the customer object. However, this results in transactions that are no associated with a customer to be included in the model. This can be confusing for customers as the totals for this model will not tie out to the other models if they have transactions not associated with customers. As mentioned in this [dbt Slack](https://getdbt.slack.com/archives/C01D1R2JLLA/p1643737027187949?thread_ts=1643656636.010939&cid=C01D1R2JLLA) thread, this is something that is confusing and should be updated.
+
+**Expected behavior**
+<!--- A clear and concise description of what you expected to happen. -->
+All transactions (even the ones not associated with a customer) should be included in the `stripe__customer_overview` model. For those that are not associated, we should include them in the ""No Associated Customer Records"" record.
+","false","2022-03-24 15:06:35.000000 UTC","264264565","74217849",,"false","2024-08-07 21:37:34.017000 UTC"
+"2454164029","2024-08-07 19:16:19.000000 UTC","2024-08-07 19:26:16.000000 UTC","84","closed","update/file-adjustments","## PR Overview
+**This PR will address the following Issue/Feature:** N/A This is a small PR to make under the hood changes to a few files.
+
+**This PR will result in the following new package version:** N/A This will not result in a new package version.
+<!--- Please add details around your decision for breaking vs non-breaking version upgrade. If this is a breaking change, were backwards-compatible options explored? -->
+
+**Please provide the finalized CHANGELOG entry which details the relevant changes included in this PR:**
+<!--- Copy/paste the CHANGELOG for this version below. -->
+
+This PR removes or makes adjustments to files which are not necessary to the package.
+
+## PR Checklist
+### Basic Validation
+Please acknowledge that you have successfully performed the following commands locally:
+- [n/a] dbt run –full-refresh && dbt test
+- [n/a] dbt run (if incremental models are present)
+
+Before marking this PR as ""ready for review"" the following have been applied:
+- [n/a] The appropriate issue has been linked, tagged, and properly assigned
+- [n/a] All necessary documentation and version upgrades have been applied
+- [n/a] docs were regenerated (unless this PR does not include any code or yml updates)
+- [x] BuildKite integration tests are passing
+- [n/a] Detailed validation steps have been provided below
+
+### Detailed Validation
+Please share any and all of your validation steps:
+<!--- Provide the steps you took to validate your changes below. -->
+
+No code changes were applied, therefore no validations are required.","false","2024-08-07 19:26:14.000000 UTC","264264565","74217849",,"true","2024-08-07 21:38:42.695000 UTC"
+"2308778830","2024-05-21 17:32:24.000000 UTC","2024-05-27 23:57:02.000000 UTC","78","closed","Release/v0.13.0","## PR Overview
+**This PR will address the following Issue/Feature:**
+- #70 
+- #77 
+
+**This PR will result in the following new package version:**
+<!--- Please add details around your decision for breaking vs non-breaking version upgrade. If this is a breaking change, were backwards-compatible options explored? -->
+- Breaking since the folder `stripe_reports` was renamed to `stripe_financial_reports` and could break if users relied on the old name.
+
+**Please provide the finalized CHANGELOG entry which details the relevant changes included in this PR:**
+<!--- Copy/paste the CHANGELOG for this version below. -->
+
+> ## 🚨 Breaking Changes 🚨
+> - Renamed folder `stripe_reports` to `stripe_financial_reports` to be more descriptive of the contents.
+>   - ⚠️ If you are using folder names to scope out configs, runs, etc., you will need to update the folder name.
+> 
+> ## Bug fixes
+> - Updated model `int_stripe__date_spine` to accommodate cases when model `stripe__balance_transactions` has no records. 
+>   - Previously, the date spine relied on `stripe__balance_transactions` to set date bounds, which caused errors if empty. Now, the model defaults to a one-month range in such cases.
+> 
+> ## Under the hood
+> - Updated structure of model `int_stripe__date_spine` for improved performance and maintainability.
+
+## PR Checklist
+### Basic Validation
+Please acknowledge that you have successfully performed the following commands locally:
+- [x] dbt run –full-refresh && dbt test
+- [ ] ~dbt run (if incremental models are present) && dbt test~
+
+Before marking this PR as ""ready for review"" the following have been applied:
+- [x] The appropriate issue has been linked, tagged, and properly assigned
+- [x] All necessary documentation and version upgrades have been applied
+    <!--- Be sure to update the package version in the dbt_project.yml, integration_tests/dbt_project.yml, and README if necessary. -->
+- [x] docs were regenerated (unless this PR does not include any code or yml updates)
+  - Will regen after approval.
+- [x] BuildKite integration tests are passing
+- [x] Detailed validation steps have been provided below
+
+### Detailed Validation
+Please share any and all of your validation steps:
+<!--- Provide the steps you took to validate your changes below. -->
+- Validation tests pass.
+
+### If you had to summarize this PR in an emoji, which would it be?
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+🍓 ","false","2024-05-27 23:57:02.000000 UTC","264264565","111930712",,"true","2024-08-07 21:38:32.143000 UTC"
+"2309523486","2024-05-22 04:04:18.000000 UTC","2024-06-13 16:43:52.000000 UTC","79","closed","[Bug] livemode_predicate generates invalid SQL on Redshift: cannot cast type character varying to boolean","### Is there an existing issue for this?
+
+- [X] I have searched the existing issues
+
+### Describe the issue
+
+livemode generates invalid sql and it fails with `cannot cast type character varying to boolean`
+
+the predicates generated is
+
+```
+where cast(livemode as BOOLEAN ) = True
+```
+
+whereas redshift would unfortunately need something like
+
+```sql
+where decode(livemode, 'true', true, 'false', false) = true
+```
+
+### Relevant error log or model output
+
+```shell
+03:57:16  Database Error in model stg_stripe__transfer (models/stg_stripe__transfer.sql)
+03:57:16    cannot cast type character varying to boolean
+03:57:16    compiled Code at target/run/stripe_source/models/stg_stripe__transfer.sql
+```
+
+
+### Expected behavior
+
+Should generate valid SQL
+
+### dbt Project configurations
+
+Not relevant for this model
+
+### Package versions
+
+  - package: fivetran/stripe
+    version: 0.12.0
+
+### What database are you using dbt with?
+
+redshift
+
+### dbt Version
+
+1.5.4
+
+### Additional Context
+
+_No response_
+
+### Are you willing to open a PR to help address this issue?
+
+- [ ] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during our [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance
+- [ ] No.","false","2024-06-13 16:43:52.000000 UTC","264264565","159990",,"false","2024-08-07 21:38:37.574000 UTC"
+"2311729969","2024-05-23 00:51:26.000000 UTC","2024-05-23 15:54:02.000000 UTC","80","open","[Investigation] Possible fanout in `int_stripe__account_daily` when using connected accounts","### What to investigate
+
+This was discovered from an investigation from error `query exceeded resource limits` in `int_stripe__account_daily`. 
+
+Upon review, [this join](https://github.com/fivetran/dbt_stripe/blob/main/models/intermediate/int_stripe__account_daily.sql#L64-L66) does not join on some sort of `account_id` or `connected_account_id`. For typical cases where only one account is in use, this is no issue, however if a user is using connected accounts, this would cause a fanout since the same balance_transaction would be repeated for every account. Also, this fanout could be what is causing resource issues.
+
+Because of internal data limitations, there is uncertainty on how to correctly address this. Ideally we want to review data from a user with connected accounts. (If that's you and would like to help us, please let us know in this thread!)
+
+### Possible Solution
+For model `int_stripe__account_daily`, in my initial investigation I thought to update the CTE `daily_account_balance_transactions` with a filter like:
+```sql
+...
+    from date_spine
+    left join balance_transaction
+        on cast(balance_transaction.date as date) = date_spine.date_day
+        and balance_transaction.source_relation = date_spine.source_relation
+        and balance_transaction.connected_account_id = 
+            case when balance_transaction.connected_account_id is not null
+                then date_spine.account_id
+                else null end -- necessary for cases where an account is not a connected account. We don't want to erroneously filter transactions out.
+    group by 1,2,3
+```
+However the issue is still that we don't have appropriate data to test if this is accurate. Just posting here, so it isn't lost.","false",,"264264565","111930712",,"false","2024-08-07 21:38:31.756000 UTC"
+"833268931","2021-03-16 23:25:08.000000 UTC","2021-03-17 19:09:32.000000 UTC","8","closed","Jm updates","This PR includes the following updates:
+
+- Breaking change consisting of renaming models to be consistent with current Fivetran best practices
+- Custom schema compatibility
+- CircleCi integration
+- Github Pages docs creation
+- Updates which address Issue #5 and Issue #3 
+- Version upgrade from v0.2.1 -> v0.3.0 as this release will include breaking changes
+- Documentation updates","false","2021-03-17 19:09:27.000000 UTC","264264565","74217849",,"true","2024-08-07 21:37:14.152000 UTC"
+"1280800057","2022-06-22 19:58:52.000000 UTC","2022-06-22 20:59:30.000000 UTC","39","closed","Needs deletion","Pull Request
+**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package and how to leverage this new feature. -->
+
+**Did you update the CHANGELOG?** 
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that will cause current package users' jobs to fail or require a `--full-refresh`? -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes (please provide breaking change details below.)
+- [ ] No  (please provide an explanation as to how the change is non-breaking below.)
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes, Issue/Feature [link bug/feature number here]
+- [ ] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] CircleCi). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [ ] Local (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] BigQuery
+- [ ] Redshift
+- [ ] Snowflake
+- [ ] Postgres
+- [ ] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2022-06-22 20:59:30.000000 UTC","264264565","104381621",,"true","2024-08-07 21:37:42.597000 UTC"
+"1876289044","2023-08-31 20:53:55.000000 UTC","2023-10-18 22:17:02.000000 UTC","69","closed","Feature/q3 2023 updates","## PR Overview
+**This PR will address the following Issue/Feature:** n/a
+
+**This PR will result in the following new package version:** v 11
+<!--- Please add details around your decision for breaking vs non-breaking version upgrade. If this is a breaking change, were backwards-compatible options explored? -->
+
+Significant updates to our Stripe package for Q3 2023. 
+
+**Please detail what change(s) this PR introduces and any additional information that should be known during the review of this PR:**
+
+- Addition of new Stripe report end models, plus updates to the balance transaction model
+- Additional of new fields 
+
+## PR Checklist
+### Basic Validation
+Please acknowledge that you have successfully performed the following commands locally:
+- [x] dbt compile
+- [x] dbt run –full-refresh
+- [x] dbt run
+- [x] dbt test
+- [x] dbt run –vars (if applicable)
+
+Before marking this PR as ""ready for review"" the following have been applied:
+- [n/a] The appropriate issue has been linked and tagged
+- [x] You are assigned to the corresponding issue and this PR
+- [x] BuildKite integration tests are passing
+
+### Detailed Validation
+Please acknowledge that the following validation checks have been performed prior to marking this PR as ""ready for review"":
+- [x] You have validated these changes and assure this PR will address the respective Issue/Feature.
+- [x] You are reasonably confident these changes will not impact any other components of this package or any dependent packages.
+- [x] You have provided details below around the validation steps performed to gain confidence in these changes.
+<!--- Provide the steps you took to validate your changes below. -->
+
+Confirm that these additions appear in the target schema when run
+
+### Standard Updates
+Please acknowledge that your PR contains the following standard updates:
+- Package versioning has been appropriately indexed in the following locations:
+    - [x] indexed within dbt_project.yml
+    - [x] indexed within integration_tests/dbt_project.yml
+- [x] CHANGELOG has individual entries for each respective change in this PR
+    <!--- If there is a parallel upstream change, remember to reference the corresponding CHANGELOG as an individual entry.  -->
+- [n/a] README updates have been applied (if applicable)
+    <!--- Remember to check the following README locations for common updates. →
+        <!--- Suggested install range (needed for breaking changes) →
+        <!--- Dependency matrix is appropriately updated (if applicable) →
+        <!--- New variable documentation (if applicable) -->
+- [x] DECISIONLOG updates have been updated (if applicable)
+- [x] Appropriate yml documentation has been added (if applicable)
+
+### dbt Docs
+Please acknowledge that after the above were all completed the below were applied to your branch:
+- [ ] docs were regenerated (unless this PR does not include any code or yml updates)
+
+### If you had to summarize this PR in an emoji, which would it be?
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+","false","2023-10-18 22:16:59.000000 UTC","264264565","91097070",,"true","2024-08-07 21:38:21.325000 UTC"
+"691506072","2020-09-02 23:34:37.000000 UTC","2020-09-21 18:09:37.000000 UTC","2","closed","Add link to Fivetran dbt hub","SSIA","false","2020-09-21 18:09:37.000000 UTC","264264565","54036902",,"true","2024-08-07 21:37:10.882000 UTC"
+"1284004042","2022-06-24 17:30:33.000000 UTC","2022-09-06 20:56:58.000000 UTC","40","closed","[Bug] Latest Version of Stripe does not reference latest stripe_source","### Is there an existing issue for this?
+
+- [X] I have searched the existing issues
+
+### Describe the issue
+
+For some reason the latest version of the stripe package does not reference the latest version of the stripe_source package. We should update this accordingly.
+
+### Relevant error log or model output
+
+_No response_
+
+### Expected behavior
+
+The package references the latest version of the source pacakge.
+
+### dbt Project configurations
+
+N/A
+
+### Package versions
+
+packages:
+  - package: fivetran/stripe
+    version: ["">=0.7.0"", ""<0.8.0""]
+
+### What database are you using dbt with?
+
+bigquery
+
+### dbt Version
+
+1.1.1
+
+### Additional Context
+
+_No response_
+
+### Are you willing to open a PR to help address this issue?
+
+- [ ] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during our [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance
+- [ ] No.","false","2022-09-06 20:56:58.000000 UTC","264264565","74217849",,"false","2024-08-07 21:37:44.858000 UTC"
+"840039812","2021-03-24 18:37:35.000000 UTC","2021-03-24 19:06:16.000000 UTC","9","closed","Fixing Typo in Subscription Details","Just found a small typo in the subscription details model","false","2021-03-24 19:06:15.000000 UTC","264264565","12856699",,"true","2024-08-07 21:37:16.501000 UTC"
+"840081929","2021-03-24 19:18:51.000000 UTC","2021-03-25 14:20:26.000000 UTC","10","closed","Fix typo in yml","Was recently checking out repo and noticed a PR from Uttam, just forgot to update the yml - his PR is already merged","false","2021-03-25 14:20:26.000000 UTC","264264565","70489227",,"true","2024-08-07 21:37:17.761000 UTC"
+"840996022","2021-03-25 14:37:24.000000 UTC","2021-04-19 21:16:30.000000 UTC","11","closed","Typo fixes","This PR includes the following updates:
+
+- Model and yml typo fixes across the package
+- Minor documentation updates for cross package consistency
+- Added CircleCi testing for disabled variables","false","2021-04-19 21:16:28.000000 UTC","264264565","74217849",,"true","2024-08-07 21:37:18.918000 UTC"
+"1433425697","2022-11-02 16:16:07.000000 UTC","2023-01-04 00:56:04.000000 UTC","49","closed","Your package relies on older versions of dbt-utils, which means our project is stuck on an older version ","### Is there an existing feature request for this?
+
+- [X] I have searched the existing issues
+
+### Describe the Feature
+
+Your package relies on older versions of dbt-utils, which means ours is stuck on an older version.
+
+### Describe alternatives you've considered
+
+_No response_
+
+### Are you interested in contributing this feature?
+
+- [ ] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during your [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance.
+- [X] No.
+
+### Anything else?
+
+_No response_","false","2023-01-04 00:56:03.000000 UTC","264264565","1542322",,"false","2024-08-07 21:37:57.955000 UTC"
+"841199454","2021-03-25 18:29:12.000000 UTC","2021-06-11 15:24:05.000000 UTC","12","closed","[Feature Request] Adding timezone variable to cast datetime into specific timezones","## Context
+
+Currently the stripe data is ingested as UTC and transformed as UTC as well (AFAIK), which causes the numbers to mismatch with the Stripe dashboard.
+
+## Proposal
+
+Adding a new (optional) variable that will cast any `DATETIME` or `DATE` fields into a specific timezone. Eg. for `stripe_customer_overview` model, add a new field like:
+`DATETIME(customer.created_at, '{{ var(""timezone"") }}') as created_at_tz`. 
+
+That way, the original `created_at` datetime in UTC is still preserved, and the end user has the option to use `created_at_tz` for a localized timezone.
+
+Similarly for `stripe_daily_overview`, adding `date_tz` columns for the WITH statements -- `daily_balance_transactions` and `daily_failed_charges`, as well as optionally joining on `date_tz` if a timezone var is present.","false","2021-06-11 15:24:05.000000 UTC","264264565","2062592",,"false","2024-08-07 21:37:25.170000 UTC"
+"1143977219","2022-02-18 23:59:46.000000 UTC","2022-02-25 23:16:16.000000 UTC","29","closed","[MagicBot] - Updating Issue templates","
+    ---
+    assignees: 'fivetran-sheringuyen'
+    ---
+    This pull request was created automatically 🎉
+    This PR does not require cutting a release as it only includes cosmetic changes by including Issue and PR templates which do not
+    impact the contents of the package.
+
+    Before merging this PR:
+    - [ ] Verify that all the tests pass.
+    ","false","2022-02-25 23:16:13.000000 UTC","264264565","94874400",,"true","2024-08-07 21:37:30.856000 UTC"
+"997540035","2021-09-15 21:35:49.000000 UTC","2021-11-04 21:21:27.000000 UTC","20","closed","FEATURE - align README with source package readme","we don't have the following sections/variables in the transform package readme. they are technically scoped to the source package, but users of the transform package may likely not go there 
+- https://github.com/fivetran/dbt_stripe_source#pivoting-out-metadata-properties
+- https://github.com/fivetran/dbt_stripe_source#including-sub-invoice-line-items
+- https://github.com/fivetran/dbt_stripe_source#running-on-live-vs-test-customers","false","2021-11-04 21:21:27.000000 UTC","264264565","65564846",,"false","2024-08-07 21:37:28.818000 UTC"
+"1294460463","2022-07-05 15:34:15.000000 UTC","2022-09-01 13:43:18.000000 UTC","41","closed","change pkg dep","Pull Request
+**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Internal
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package and how to leverage this new feature. -->
+Just updating the package dependency to reference the new 0.7.1 source version
+**Did you update the CHANGELOG?** 
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that will cause current package users' jobs to fail or require a `--full-refresh`? -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes (please provide breaking change details below.)
+- [x] No  (please provide an explanation as to how the change is non-breaking below.)
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes, Issue/Feature [link bug/feature number here]
+- [x] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] CircleCi). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [ ] Local (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] BigQuery
+- [x] Redshift
+- [x] Snowflake
+- [x] Postgres
+- [ ] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2022-09-01 13:43:15.000000 UTC","264264565","91097070",,"true","2024-08-07 21:37:43.704000 UTC"
+"1149849240","2022-02-24 22:48:13.000000 UTC","2022-03-09 19:41:07.000000 UTC","30","closed","bugfix/issues-24-27-28","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Fivetran employee
+
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package -->
+Edit after
+
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that -->
+<!--- Mark yes or no (eg. [x] Yes). If yes, link the issue. -->
+- [ ] Yes (please provide breaking change details below.)
+- [x] No  (please provide explanation how the change is non breaking below.)
+
+**Is this PR in response to a previously created Issue**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- Mark yes or no (eg. [x] Yes). If yes, link the issue. -->
+- [x] Yes, Issue [link issue number here]
+- [ ] No 
+#24 
+#27 
+#28 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] CircleCi). --> 
+- [x] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [ ] Other (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+- [x] BigQuery
+- [x] Redshift
+- [x] Snowflake
+- [x] Postgres
+- [x] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2022-03-09 19:41:06.000000 UTC","264264565","94874400",,"true","2024-08-07 21:37:32.072000 UTC"
+"1447996313","2022-11-14 12:45:39.000000 UTC","2022-11-17 22:47:09.000000 UTC","50","closed","Add subscription item ID","Pull Request
+**Are you a current Fivetran customer?** 
+Lewis Davies, Senior Analytics Engineer, Prisma
+
+**What change(s) does this PR introduce?** 
+Adds `subscription_item_id` column to `stripe__invoice_line_items`, allowing the model to be joined to [Stripe Usage Records](https://stripe.com/docs/api/usage_records).
+
+**Did you update the CHANGELOG?** 
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that will cause current package users' jobs to fail or require a `--full-refresh`? -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes (please provide breaking change details below.)
+- [x] No  (please provide an explanation as to how the change is non-breaking below.)
+It simply brings through a column that already exists in an upstream model.
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes, Issue/Feature [link bug/feature number here]
+- [x] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] CircleCi). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [x] Local (please provide additional testing details below)
+I made the changes on my machine and installed the local version in my dbt project by adding `- local: ~/dbt_stripe` to `packages.yml`. I then successfully ran `dbt build -s package:stripe`.
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] BigQuery
+- [ ] Redshift
+- [x] Snowflake
+- [ ] Postgres
+- [ ] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2022-11-17 15:41:16.000000 UTC","264264565","16354488",,"true","2024-08-07 21:37:49.788000 UTC"
+"2338604057","2024-06-06 15:54:51.000000 UTC","2024-08-02 20:58:57.000000 UTC","81","closed","Feature/normalized billing model","to be completed","false","2024-08-02 20:58:57.000000 UTC","264264565","91097070",,"true","2024-08-07 21:38:39.026000 UTC"
+"1450576163","2022-11-16 00:02:42.000000 UTC","2022-11-28 17:26:55.000000 UTC","51","closed","Feature/json metadata","Pull Request
+**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+internal
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package and how to leverage this new feature. -->
+update readme to include how to use metadata variable dictionary arguments 
+**Did you update the CHANGELOG?** 
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that will cause current package users' jobs to fail or require a `--full-refresh`? -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes (please provide breaking change details below.)
+- [x] No  (please provide an explanation as to how the change is non-breaking below.)
+updating readme only
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes, Issue/Feature https://github.com/fivetran/dbt_stripe/issues/45
+- [ ] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] CircleCi). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] CircleCi <!--- CircleCi testing is only applicable to Fivetran employees. --> 
+- [x] Local (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] BigQuery
+- [x] Redshift
+- [x] Snowflake
+- [x] Postgres
+- [ ] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2022-11-28 17:26:52.000000 UTC","264264565","91097070",,"true","2024-08-07 21:37:52.643000 UTC"
+"1599813736","2023-02-25 19:56:28.000000 UTC","2023-02-27 15:20:32.000000 UTC","58","closed","Update stripe__using_subscription_history description","**Are you a current Fivetran customer?** 
+No
+
+**What change(s) does this PR introduce?** 
+Update description of stripe__using_subscription_history in README: it should be set to true if we are using older version of connector/destination where there is no subscription_history history
+
+**Did you update the CHANGELOG?** 
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that will cause current package users' jobs to fail or require a `--full-refresh`? -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes (please provide breaking change details below.)
+- [x] No  (please provide an explanation as to how the change is non-breaking below.)
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes, Issue/Feature [link bug/feature number here]
+- [x] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] BuildKite). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] BuildKite <!--- BuildKite testing is only applicable to Fivetran employees. --> 
+- [ ] Local (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] BigQuery
+- [ ] Redshift
+- [ ] Snowflake
+- [ ] Postgres
+- [ ] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2023-02-27 15:20:32.000000 UTC","264264565","22833999",,"true","2024-08-07 21:38:09.414000 UTC"
+"1453574882","2022-11-17 15:49:19.000000 UTC","2022-11-23 04:21:50.000000 UTC","52","closed","Customer/add sub item","This is a customer created PR with some minor changes to ensure BuildKite testing functionality is integrated before merging to `main`.
+
+See PR #50 for details around the updates applied within this PR.","false","2022-11-23 04:21:50.000000 UTC","264264565","74217849",,"true","2024-08-07 21:37:51.004000 UTC"
+"1603378228","2023-02-28 16:17:06.000000 UTC","2023-03-21 20:13:54.000000 UTC","59","closed","[Bug] stripe__daily_overview run exceeds memory","### Is there an existing issue for this?
+
+- [X] I have searched the existing issues
+
+### Describe the issue
+
+The stripe__daily_overview model times out when run. The fix probably will be similar to what was done in our [Recurly package](https://github.com/fivetran/dbt_recurly/pull/9/files).
+
+![image (2)](https://user-images.githubusercontent.com/91097070/221912369-f421f9f9-e054-4122-81a7-7c802d91454e.png)
+
+A customer raised this issue in dbt slack. https://getdbt.slack.com/archives/C01D1R2JLLA/p1677259324297449
+
+### Relevant error log or model output
+
+_No response_
+
+### Expected behavior
+
+A clean run
+
+### dbt Project configurations
+
+n/a
+
+### Package versions
+
+v0.9.0
+
+### What database are you using dbt with?
+
+bigquery
+
+### dbt Version
+
+v1.4.1
+
+### Additional Context
+
+_No response_
+
+### Are you willing to open a PR to help address this issue?
+
+- [X] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during our [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance
+- [ ] No.","false","2023-03-21 20:13:54.000000 UTC","264264565","91097070",,"false","2024-08-07 21:38:12.352000 UTC"
+"1751995009","2023-06-12 06:26:35.000000 UTC","2023-06-14 13:45:23.000000 UTC","65","open","[FEATURE] metadata columns does not appear summary tables","### Is there an existing issue for this?
+
+- [X] I have searched the existing issues
+
+### Describe the issue
+
+I want to add some columns from the metadata column into some of the summary tables:
+
+stripe__balance_transactions
+stripe__invoice_details
+stripe__invoice_line_item_details
+stripe__subscription_details
+stripe__customer_overview
+
+With the exception of `stripe__customer_overview` adding the following vars in `dbt_project.yml` did not help:
+
+```
+  stripe__charge_metadata: ['col1', 'col2', 'col3', 'col4'] 
+  stripe__invoice_metadata: ['col1', 'col2', 'col3', 'col4']
+  stripe__subscription_metadata: ['col1', 'col2', 'col3', 'col4']
+  stripe__customer_metadata: ['col1']
+```
+
+For now, I did the same as [here](https://github.com/fivetran/dbt_stripe/issues/43) , adding manually 
+
+```
+{% if var('stripe__charge_metadata',[]) %}
+      {% for metadata in var('stripe__charge_metadata') %}
+          ,charge.{{ metadata }} as charge_{{ metadata }}
+      {% endfor %}
+    {% endif %}
+
+    {% if var('stripe__customer_metadata',[]) %}
+      {% for metadata in var('stripe__customer_metadata') %}
+          ,customer.{{ metadata }} as customer_{{ metadata }}
+      {% endfor %}
+    {% endif %}
+
+    {% if var('stripe__charge_metadata',[]) %}
+      {% for metadata in var('stripe__charge_metadata') %}
+          ,refund_charge.{{ metadata }} as refund_charge_{{ metadata }}
+      {% endfor %}
+    {% endif %}
+```
+
+To files like `stripe__balance_transactions.sql`
+
+### Relevant error log or model output
+
+```shell
+No error was reported as dbt run and test work.
+```
+
+
+### Expected behavior
+
+Columns `col1, col2, col3, col4` appear in:
+
+stripe__balance_transactions
+stripe__invoice_details
+stripe__invoice_line_item_details
+stripe__subscription_details
+
+Column `col1` appears in (it is):
+stripe__customer_overview
+
+### dbt Project configurations
+
+```
+# Name your project! Project names should contain only lowercase characters
+# and underscores. A good package name should reflect your organization's
+# name or the intended use of these models
+name: 'fivetran_dbt'
+version: '1.0.0'
+config-version: 2
+
+# This setting configures which ""profile"" dbt uses for this project.
+profile: 'fivetran_dbt'
+
+# These configurations specify where dbt should look for different types of files.
+# The `model-paths` config, for example, states that models in this project can be
+# found in the ""models/"" directory. You probably won't need to change these!
+model-paths: [""models""]
+analysis-paths: [""analyses""]
+test-paths: [""tests""]
+seed-paths: [""seeds""]
+macro-paths: [""macros""]
+snapshot-paths: [""snapshots""]
+
+target-path: ""target""  # directory which will store compiled SQL files
+clean-targets:         # directories to be removed by `dbt clean`
+  - ""target""
+  - ""dbt_packages""
+
+
+# Configuring models
+# Full documentation: https://docs.getdbt.com/docs/configuring-models
+
+# In this example config, we tell dbt to build all models in the example/ directory
+# as tables. These settings can be overridden in the individual model files
+# using the `{{ config(...) }}` macro.
+models:
+  fivetran_dbt:
+  stripe:
+  stripe_source:
+
+vars:
+  using_schedules: False
+  stripe_source:
+    stripe_database: dkall
+    stripe_schema: stripe
+  stripe_database: dkall
+  stripe_schema: stripe
+  stripe__subscription_history: True
+  stripe_source:
+    stripe__using_invoice_line_sub_filter: false
+  stripe__charge_metadata: ['col1', 'col2', 'col3', 'col4'] 
+  stripe__invoice_metadata: ['col1', 'col2', 'col3', 'col4']
+  stripe__subscription_metadata: ['col1', 'col2', 'col3', 'col4']
+  stripe__customer_metadata: ['col1']
+```
+
+### Package versions
+
+```
+packages:
+  - package: fivetran/stripe
+    version: ["">=0.10.0"", ""<0.11.0""]
+```
+
+### What database are you using dbt with?
+
+redshift
+
+### dbt Version
+
+```
+Core:
+  - installed: 1.5.1
+  - latest:    1.5.1 - Up to date!
+
+Plugins:
+  - postgres: 1.5.1 - Up to date!
+  - redshift: 1.5.4 - Up to date!
+
+
+```
+
+### Additional Context
+
+_No response_
+
+### Are you willing to open a PR to help address this issue?
+
+- [ ] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during our [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance
+- [X] No.","false",,"264264565","82036810",,"false","2024-08-07 21:38:18.467000 UTC"
+"1462749330","2022-11-24 04:42:18.000000 UTC","2022-12-05 17:40:28.000000 UTC","53","closed","updates","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package and how to leverage this new feature. -->
+
+**Did you update the CHANGELOG?** 
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that will cause current package users' jobs to fail or require a `--full-refresh`? -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes (please provide breaking change details below.)
+- [ ] No  (please provide an explanation as to how the change is non-breaking below.)
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes, Issue/Feature [link bug/feature number here]
+- [ ] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] BuildKite). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] BuildKite <!--- BuildKite testing is only applicable to Fivetran employees. --> 
+- [ ] Local (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] BigQuery
+- [ ] Redshift
+- [ ] Snowflake
+- [ ] Postgres
+- [ ] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2022-12-05 17:40:28.000000 UTC","264264565","91097070",,"true","2024-08-07 21:37:54.197000 UTC"
+"2058350568","2023-12-28 11:57:28.000000 UTC","2023-12-28 13:10:21.000000 UTC","72","closed","Create quickstart.yml","**Please provide your name and company**
+
+**Link the issue/feature request which this PR is meant to address**
+<!--- If an issue was not created, please create one first so we may discuss the PR prior to opening one. -->
+
+**Detail what changes this PR introduces and how this addresses the issue/feature request linked above.**
+
+**How did you validate the changes introduced within this PR?**
+
+**Which warehouse did you use to develop these changes?**
+
+**Did you update the CHANGELOG?**
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)**
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+
+**PR Template** 
+- [Community Pull Request Template](?expand=1&template=pull_request_template.md) (default)
+
+- [Maintainer Pull Request Template](?expand=1&template=maintainer_pull_request_template.md) (to be used by maintainers)
+","false","2023-12-28 13:10:21.000000 UTC","264264565","101875473",,"true","2024-08-07 21:38:26.170000 UTC"
+"2358110327","2024-06-17 19:39:25.000000 UTC","2024-08-07 19:26:15.000000 UTC","82","open","Feature/standardized billing line item model","## PR Overview
+**This PR will address the following Issue/Feature:** Internal Project
+
+**This PR will result in the following new package version:** `v0.14.0`
+<!--- Please add details around your decision for breaking vs non-breaking version upgrade. If this is a breaking change, were backwards-compatible options explored? -->
+
+While there are no immediate breaking changes in this PR, it will include a net new end model as well as two new upstream staging models `discount` and `product` which should be accompanied by a minor (v0.X.0) release.
+
+**Please provide the finalized CHANGELOG entry which details the relevant changes included in this PR:**
+<!--- Copy/paste the CHANGELOG for this version below. -->
+
+> ## Feature Updates
+> - Addition of the `stripe__line_item_enhanced` model. This model builds a standard denormalized analytical table which can be used to report on your revenue, subscription, customer, and product metrics from your billing platform. This model has been designed to match the schema of the similarly named `*__line_item_enhanced` model within the Shopify, Recharge, Recurly, and Zuora platforms in an effort to standardize reporting when using data from a billing platform.
+
+## PR Checklist
+### Basic Validation
+Please acknowledge that you have successfully performed the following commands locally:
+- [X] dbt run –full-refresh && dbt test
+- [X] dbt run (if incremental models are present) && dbt test
+
+Before marking this PR as ""ready for review"" the following have been applied:
+- [n/a] The appropriate issue has been linked, tagged, and properly assigned
+- [X] All necessary documentation and version upgrades have been applied
+    <!--- Be sure to update the package version in the dbt_project.yml, integration_tests/dbt_project.yml, and README if necessary. -->
+- [will be generated before release] docs were regenerated (unless this PR does not include any code or yml updates)
+- [X] BuildKite integration tests are passing
+- [X] Detailed validation steps have been provided below
+
+### Detailed Validation
+Please share any and all of your validation steps:
+<!--- Provide the steps you took to validate your changes below. -->
+
+Validation tests have been applied for the new end model and we are opening this feature to the community to receive feedback before broader release.
+
+### If you had to summarize this PR in an emoji, which would it be?
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+💬 ","false",,"264264565","74217849",,"true","2024-08-07 21:38:41.575000 UTC"
+"1621902855","2023-03-13 17:06:36.000000 UTC","2023-03-21 01:44:23.000000 UTC","60","closed","update stripe package with running total model","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Internal
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package and how to leverage this new feature. -->
+- Introduces a `running_total` model to alleviate runtime errors resulting from the daily_overview model exceeding disc capacity upon running.
+**Did you update the CHANGELOG?** 
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that will cause current package users' jobs to fail or require a `--full-refresh`? -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes (please provide breaking change details below.)
+- [ ] No  (please provide an explanation as to how the change is non-breaking below.)
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes, Issue/Feature [[link bug/feature number here]](https://github.com/fivetran/dbt_stripe/issues/59)
+- [ ] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] BuildKite). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] BuildKite <!--- BuildKite testing is only applicable to Fivetran employees. --> 
+- [ ] Local (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] BigQuery
+- [x] Redshift
+- [x] Snowflake
+- [x] Postgres
+- [x] Databricks
+- [x] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2023-03-21 01:44:22.000000 UTC","264264565","91097070",,"true","2024-08-07 21:38:10.672000 UTC"
+"1477076384","2022-12-05 17:39:56.000000 UTC","2023-01-10 21:02:29.000000 UTC","54","closed","union_feature","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Internal
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package and how to leverage this new feature. -->
+- Bring the source relation column downstream from the addition of the union feature
+- Downstream changes from introducing the `pricing` source table which may replace the `plan` table depending on whether customer migrated to the Price API (some column names have changed in stripe__invoice_line_items)
+- prefix variables with ""stripe__"" so they may be used globally
+
+**Did you update the CHANGELOG?** 
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that will cause current package users' jobs to fail or require a `--full-refresh`? -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes (please provide breaking change details below.)
+- [ ] No  (please provide an explanation as to how the change is non-breaking below.)
+Will need to refresh for this new field
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes, Issue/Feature [link bug/feature number here]
+- [x] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] BuildKite). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] BuildKite <!--- BuildKite testing is only applicable to Fivetran employees. --> 
+- [ ] Local (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] BigQuery
+- [x] Redshift
+- [x] Snowflake
+- [x] Postgres
+- [x] Databricks
+- [ ] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2022-12-16 16:41:52.000000 UTC","264264565","91097070",,"true","2024-08-07 21:38:00.423000 UTC"
+"1478151646","2022-12-06 04:22:51.000000 UTC","2023-01-10 21:02:09.000000 UTC","55","closed","add new models","**Are you a current Fivetran customer?** 
+<!--- Please tell us your name, title and company -->
+Internal
+**What change(s) does this PR introduce?** 
+<!--- Describe what changes your PR introduces to the package and how to leverage this new feature. -->
+- Add new models `stripe__invoice_details` and `stripe__account_daily_overview` 
+- Update `stripe__invoice_line_items` with pricing data and `subscription_item_id`
+- Remove the `stripe__subscription_line_items` model
+
+**Did you update the CHANGELOG?** 
+<!--- Please update the new package version’s CHANGELOG entry detailing the changes included in this PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes
+
+**Does this PR introduce a breaking change?**
+<!--- Does this PR introduce changes that will cause current package users' jobs to fail or require a `--full-refresh`? -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] Yes (please provide breaking change details below.)
+- [] No  (please provide an explanation as to how the change is non-breaking below.)
+
+**Did you update the dbt_project.yml files with the version upgrade (please leverage standard semantic versioning)? (In both your main project and integration_tests)** 
+<!--- The dbt_project.yml and the integration_tests/dbt_project.yml files contain the version number. Be sure to upgrade it accordingly -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [] Yes
+Updated in `union_feature` branch
+
+**Is this PR in response to a previously created Bug or Feature Request**
+<!--- If an Issue was created it is helpful to track the progress by linking it in the PR. -->
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [ ] Yes, Issue/Feature [link bug/feature number here]
+- [x] No 
+
+**How did you test the PR changes?** 
+<!--- Proof of testing is required in order for the PR to be approved. -->
+<!--- To check a box, remove the space and insert an x in the box (eg. [x] BuildKite). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] BuildKite <!--- BuildKite testing is only applicable to Fivetran employees. --> 
+- [ ] Local (please provide additional testing details below)
+
+**Select which warehouse(s) were used to test the PR**
+<!--- To check a warehouse remove the space and insert an x in the box (eg. [x] Bigquery). --> 
+<!--- To select a checkbox you simply need to add an ""x"" with no spaces between the brackets (eg. [x] Yes). -->
+- [x] BigQuery
+- [x] Redshift
+- [x] Snowflake
+- [x] Postgres
+- [x] Databricks
+- [x] Other (provide details below)
+
+**Provide an emoji that best describes your current mood**
+<!--- For a complete list of markdown compatible emojis check our this git repo (https://gist.github.com/rxaviers/7360908)  --> 
+:dancer:
+
+**Feedback**
+
+We are so excited you decided to contribute to the Fivetran community dbt package! We continue to work to improve the packages and would greatly appreciate your [feedback](https://www.surveymonkey.com/r/DQ7K7WW) on our existing dbt packages or what you'd like to see next.
+","false","2022-12-16 12:04:28.000000 UTC","264264565","91097070",,"true","2024-08-07 21:37:58.385000 UTC"
+"1184917439","2022-03-29 13:58:10.000000 UTC","2022-04-11 13:45:29.000000 UTC","31","closed","[Bug] Issue with stripe source on dbt run","### Is there an existing issue for this?
+
+- [X] I have searched the existing issues
+
+### Describe the issue
+
+When I try to `dbt run` for the first time, I get the following error because the stripe subscription table does not exist.
+
+```
+Database Error in model stg_stripe__subscription_tmp (models/tmp/stg_stripe__subscription_tmp.sql)
+relation ""stripe.subscription"" does not exist
+LINE 7: from ""db"".""stripe"".""subscription""
+             ^
+ compiled SQL at target/run/stripe_source/models/tmp/stg_stripe__subscription_tmp.sql
+Done. PASS=32 WARN=0 ERROR=1 SKIP=4 TOTAL=37
+```
+
+In my database, Fivetran does not export a table named `subscription` but instead the following tables.
+
+```
+subscription_history
+subscription_discount
+subscription_item
+subscription_tax_rate
+```
+
+Is there an easy fix for this?
+
+### Relevant error log or model output
+
+_No response_
+
+### Expected behavior
+
+This should either look for a table with another name or build properly.
+
+### dbt Project configurations
+
+Using the latest dbt version as of 28th March and have only installed the stripe package.
+
+
+
+
+
+
+### Package versions
+
+```
+packages:
+  - package: fivetran/stripe
+    version: ["">=0.6.0"", ""<0.7.0""]
+```
+
+### What database are you using dbt with?
+
+postgres
+
+### dbt Version
+
+dbt installed version: 1.0.4
+
+### Additional Context
+
+_No response_
+
+### Are you willing to open a PR to help address this issue?
+
+- [ ] Yes.
+- [X] Yes, but I will need assistance and will schedule time during our [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance
+- [X] No.","false","2022-03-29 23:18:01.000000 UTC","264264565","5836421",,"false","2024-08-07 21:37:35.361000 UTC"
+"1185564830","2022-03-29 23:03:13.000000 UTC","2022-03-30 21:03:57.000000 UTC","32","closed","[Feature] Add `paid_out_of_bound` boolean to better identify invoices paid outside of Stripe","### Is there an existing feature request for this?
+
+- [X] I have searched the existing issues
+
+### Describe the Feature
+
+There is a `paid_out_of_bound` value in the Stripe API that flags whether an invoice was marked as ""Paid outside of Stripe"" which is helpful to be able to isolate invoices where the funds weren't collected through Stripe directly.
+
+Link to the API docs: https://stripe.com/docs/api/invoices/object#invoice_object-paid_out_of_band
+
+In my specific use case, I was trying to understand why invoices were marked as paid, but had no `charge` record. Upon further investigation, this could be due a few different scenarios:
+
+1. Invoice was paid in full or partially by discounts
+2. Invoice was paid in full or partially by applied balances
+3. Invoice was marked as paid due to the amount is below the min charge amount.
+4. Invoice received a credit note
+5. Invoice was marked as paid outside of Stripe
+
+It would greatly simplify any logic needed to identify each scenario by including the Boolean.
+
+### Describe alternatives you've considered
+
+I started to play around with logic based on the `invoice.amount_due` value to check why no `charge` was created to clearly show the different scenarios. Right now the solution would be to evaluate whether the discount, applied balance, min charge or credit note covered the entire invoice and then anything remaining would be assumed as Paid Outside of Stripe.
+
+### Are you interested in contributing this feature?
+
+- [ ] Yes.
+- [ ] Yes, but I will need assistance and will schedule time during your [office hours](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours) for guidance.
+- [X] No.
+
+### Anything else?
+
+_No response_","false","2022-03-30 21:03:57.000000 UTC","264264565","24665116",,"false","2024-08-07 21:37:34.940000 UTC"
+"892091990","2021-05-14 17:05:03.000000 UTC","2021-05-14 17:23:55.000000 UTC","13","closed","[MagicBot] - Adding Issue and PR templates","
+    ---
+    assignees: 'fivetran-joemarkiewicz'
+    ---
+    This pull request was created automatically 🎉
+    This PR does not require cutting a release as it only includes cosmetic changes by including Issue and PR templates which do not
+    impact the contents of the package.
+
+    Before merging this PR:
+    - [ ] Verify that all the tests pass.
+    ","false","2021-05-14 17:23:53.000000 UTC","264264565","74217849",,"true","2024-08-07 21:37:20.161000 UTC"

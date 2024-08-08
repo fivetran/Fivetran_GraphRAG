@@ -1,0 +1,1018 @@
+"id","issue_id","body","created_at","updated_at","user_id","_fivetran_synced"
+"1337197271","1383635883","Hi All,
+I have upgraded to the latest 0.7.4 packages for Stripe (both the source and normal package) and I am still getting very similar errors as the original issue.
+
+```
+11:37:30  Database Error in model stg_stripe__plan (models/stg_stripe__plan.sql)
+11:37:30    Syntax error: Unexpected keyword AS at [199:2]
+11:37:30    compiled Code at target/run/stripe_source/models/stg_stripe__plan.sql
+```
+
+When I check out the compiled SQL I can see a field called `interval` listed in the select list:
+```
+    interval
+    
+ as plan_interval 
+```
+
+This is failing because on BigQuery `interval` is a reserved word and the query parser isn't liking the syntax.
+
+I believe here that, to ensure issues like this do not happen, at least in BigQuery, they should be quoted using the tick so that reserved words can be referenced in a query i.e.:
+
+```
+    `interval`
+    
+ as plan_interval 
+```
+
+The above SQL now passes and the model is able to run.
+
+Can this be looked into please?
+
+It is worth noting that I am not using any `vars` or any additional configuration apart from running the model directly.","2022-12-05 11:49:06.000000 UTC","2022-12-05 11:50:28.000000 UTC","80682772","2024-08-07 21:43:48.849000 UTC"
+"1337309011","1383635883","Looking at the solution above on using the `alias` function of the `vars` `stripe__plan_metadata` this did not work and will not fix this issue as the original code will always fail:
+
+```
+   interval
+    
+ as plan_interval 
+
+
+    from base
+),
+
+final as (
+    
+    select 
+        id as plan_id,
+        active as is_active,
+        amount,
+        currency,
+        plan_interval, -- Field is aliased within get_plan_columns macro
+        interval_count,
+        metadata,
+        nickname,
+        product_id
+
+        
+        , replace( 
+
+  json_extract_scalar(metadata, '$.{'name': 'interval'}' )
+
+, '""', '') as {'name':_'interval'},
+replace( 
+
+  json_extract_scalar(metadata, '$.{'alias': 'craig_interval'}' )
+
+, '""', '') as {'alias':_'craig_interval'}
+```
+
+This is the SQL that is produced, and as you can see at the top of the query, the keyword is still used, whereas the `json_extract` is then used later. So the query is not fixed.","2022-12-05 13:08:07.000000 UTC","2022-12-05 13:08:07.000000 UTC","80682772","2024-08-07 21:43:48.849000 UTC"
+"1337314981","1383635883","The interval column is not in the metadata column, but is instead a ""normal"" column:
+![Screenshot 2022-12-05 at 13 12 24](https://user-images.githubusercontent.com/80682772/205645611-ac78971e-778e-4a3d-b74c-7ae24c502e62.png)
+","2022-12-05 13:12:30.000000 UTC","2022-12-05 13:12:30.000000 UTC","80682772","2024-08-07 21:43:48.849000 UTC"
+"1337571442","1383635883","Hi @CraigWilson-ZOE thanks for raising this with out team. I think the issue you are detailing is different from the original issue outlined in this Bug Report. This bug report was detailing reserved words within the `metadata` fields that are being parsed out via a `var`. 
+
+Your bug however, is a field that is explicitly being selected within the model (regardless of the var) and could not be addressed using the metadata solution outlined in this bug report. 
+
+I did try to recreate the issue you had using the latest version of the package(s) and saw the `interval` field was being backticked in the compiled code and ran successfully on BigQuery 🤔 
+![image](https://user-images.githubusercontent.com/74217849/205674290-84cc9b79-6d15-409d-8bbe-7c8d18f8c411.png)
+
+The quoting should be happening within the [get_plan_columns](https://github.com/fivetran/dbt_stripe_source/blob/f3da087187c97eb48cee6ff591056cc6f1be900e/macros/get_plan_columns.sql#L25-L26) macro from the source package. The only way I could see dbt skipping over the quote is if the `target.type` for your dbt adapter is not BigQuery. Would you be able to confirm that the profiles.yml for your dbt target is a BigQuery type in this instance? 
+
+For a more immediate fix, you may be able to downgrade just your stripe_source package to `v0.7.3` as the only change from `v0.7.4` was some under the hood updates and adjusting this `interval` cast to be performed within the macro opposed to the select statement.","2022-12-05 15:25:17.000000 UTC","2022-12-05 15:25:17.000000 UTC","74217849","2024-08-07 21:43:48.849000 UTC"
+"1337663740","1383635883","Ah! I think you have solved the issue for me actually.
+
+We are using the `fal adapter` for our dbt, so that we can run Python models locally and not have to spin up a data proc cluster. This means that our `target.type` won't be BigQuery.
+
+Here is a excerpt from our `profiles.yml`:
+
+```yml
+default:
+  target: development
+  outputs:
+    development:
+      type: fal
+      threads: 16
+      db_profile: warehouse
+
+    warehouse:
+      type: bigquery
+      method: oauth
+```
+
+I am wondering how we might be able to get around this or have this changed to deal with these new type of adapters 🤔 ","2022-12-05 16:27:14.000000 UTC","2022-12-05 16:27:14.000000 UTC","80682772","2024-08-07 21:43:48.849000 UTC"
+"1338006064","1383635883","@CraigWilson-ZOE that is definitely interesting and thanks for sharing! I can see how this would cause an error for you with the target.type not matching our supported warehouses target.type names. That being said, you are using BigQuery so I still feel this can be supported. I am just not entirely familiar with the fal target and how it differs from the basic BigQuery target.
+
+As this is a different conversation from the one being had within this issue, I have opened a new FR on the source package (linked above) for us to continue the discussion. Feel free to add more context within that ticket.","2022-12-05 19:15:50.000000 UTC","2022-12-05 19:15:50.000000 UTC","74217849","2024-08-07 21:43:48.849000 UTC"
+"1343027376","1477076384","@fivetran-jamie  so this is ready for review save for the error on databricks which i think is related to how i added null to price_id and plan_id in `stg_stripe__pricing ` in the opposite source table CTEs as an additional field, to help the unique tests pass in the `stg_stripe__pricing`. So I'm still thinking through how to go about this","2022-12-08 17:04:50.000000 UTC","2022-12-08 17:05:45.000000 UTC","91097070","2024-08-07 21:43:48.849000 UTC"
+"1347004281","1478151646","Note on `stripe__subscription_line_items`
+- For `stripe__subscription_line_items` I was thinking of just deleting this model since it's just taking invoice data and filtering for just those with a subscription id, so it's not that useful for customers. Further more we already have a `stripe__subscription_details` model. ","2022-12-12 18:20:28.000000 UTC","2022-12-12 18:20:28.000000 UTC","91097070","2024-08-07 21:43:48.849000 UTC"
+"1347033597","1478151646","Hi @fivetran-jamie this is ready for review. This branch contains updates for the following
+- new models `invoice details` and `account daily overview` (with new `int_stripe__account_daily` and `int_stripe__date_spine`)
+- update on models `invoice line items` 
+
+Note on stripe__subscription_line_items
+- For `stripe__subscription_line_items` I was thinking of just deleting this model since it's just taking invoice data and filtering for just those with a subscription id, so it's not that useful for customers. Further more we already have a `stripe__subscription_details` model.
+
+Lmk if you have any questions!
+","2022-12-12 18:32:28.000000 UTC","2022-12-12 18:32:54.000000 UTC","91097070","2024-08-07 21:43:48.849000 UTC"
+"1051291779","1053954498","this is in v0.5.1 which should be up on dbt hub shortly!","2022-02-25 21:40:59.000000 UTC","2022-02-25 21:40:59.000000 UTC","65564846","2024-08-07 21:43:48.013000 UTC"
+"1352290835","1478151646","looks good to me! only addition i'd make is to the changelog -- maybe add the code for how they could essentially recreate the deleted `stripe__subscription_line_items` model","2022-12-14 22:15:28.000000 UTC","2022-12-14 22:15:28.000000 UTC","65564846","2024-08-07 21:43:48.849000 UTC"
+"1352740177","1477076384","> looks pretty good to me! just spotted a couple of places where we need to update the price variable name (though i suppose this will be merged with the other PR where you already did that 🤷 )
+
+Thanks @fivetran-jamie yeah it doesn't hurt, I added your changes in 👍 
+","2022-12-15 08:54:21.000000 UTC","2022-12-15 08:54:21.000000 UTC","91097070","2024-08-07 21:43:48.849000 UTC"
+"1217161207","1235727576","should this get merged? ","2022-08-16 21:01:55.000000 UTC","2022-08-16 21:01:55.000000 UTC","65564846","2024-08-07 21:43:48.014000 UTC"
+"1217161615","1294460463","should this get merged?","2022-08-16 21:02:22.000000 UTC","2022-08-16 21:02:22.000000 UTC","65564846","2024-08-07 21:43:48.014000 UTC"
+"1370374471","1433425697","Closing this as PR #48 has been merged and released. The package is now using the latest version of dbt-utils","2023-01-04 00:56:03.000000 UTC","2023-01-04 00:56:03.000000 UTC","74217849","2024-08-07 21:43:48.849000 UTC"
+"1077730911","1120843886","I just wanted to provide an update here that I have not been able to get a strong understanding around the best path forward with this open issue. The limitation of not having production data is seemingly one of the largest blockers for testing out the behaviors.
+
+If anyone else that comes along to this thread has some insight or commentary to provide, we would extremely welcome it! In the meantime I will keep investigating.","2022-03-24 15:05:38.000000 UTC","2022-03-24 15:05:38.000000 UTC","74217849","2024-08-07 21:43:48.013000 UTC"
+"1077731668","1121059951","The merged PR above resolved this issue and the fix is live in the latest version of the package.","2022-03-24 15:06:20.000000 UTC","2022-03-24 15:06:20.000000 UTC","74217849","2024-08-07 21:43:48.013000 UTC"
+"1077731929","1121064129","The merged PR above resolved this issue and the fix is live in the latest version of the package.","2022-03-24 15:06:35.000000 UTC","2022-03-24 15:06:35.000000 UTC","74217849","2024-08-07 21:43:48.013000 UTC"
+"1077732190","1120801855","The merged PR above resolved this issue and the fix is live in the latest version of the package.","2022-03-24 15:06:50.000000 UTC","2022-03-24 15:06:50.000000 UTC","74217849","2024-08-07 21:43:48.013000 UTC"
+"1670754085","1838674502","Hey Eric, thanks for reaching out about this and we're glad that you are finding value out of Stripe data. 
+
+Considering that your organization uses DuckDB it definitely makes sense that you would like destination support there. Since Fivetran currently does not support DuckDB as a database we would not make this change ourself, however if you are open to creating a PR for the addition our team would happily review it and include the update in our package.  
+
+I noticed you are interested in coming to our office hours however I do not that you scheduled any time with us yet. If you would like some assistance with creating the PR, you can schedule time for office hours using [this link](https://calendly.com/fivetran-solutions-team/fivetran-solutions-team-office-hours). ","2023-08-09 06:35:51.000000 UTC","2023-08-09 06:35:51.000000 UTC","117408614","2024-08-07 21:43:49.273000 UTC"
+"783815496","811972415","@MarkMacArdle thanks for surfacing this issue! I just pushed changes to update this. 
+
+I've released version 0.2.1, which will have these changes.  Once this version is published to the hub (generally happens within 24 hours), you will be able to upgrade on your side.
+
+Thanks!","2021-02-23 02:15:21.000000 UTC","2021-02-23 02:15:21.000000 UTC","54283769","2024-08-07 21:43:47.625000 UTC"
+"2266138011","2338604057","Closing this as PR #82 will address this","2024-08-02 20:58:57.000000 UTC","2024-08-02 20:58:57.000000 UTC","74217849","2024-08-07 21:43:49.273000 UTC"
+"1081913455","1184917439","Hi @shaon-chowdhury thanks so much for opening this issue 👋 
+
+If you do not have the `subscriptions` source table, then you will still be able to leverage this dbt package by [disabling the subscription models](https://github.com/fivetran/dbt_stripe#disabling-models). To do so, you can add the following to your `dbt_project.yml`
+
+```yml
+vars:
+    using_subscriptions:   False
+```
+
+Let me know if you have any other questions!","2022-03-29 14:03:56.000000 UTC","2022-03-29 14:03:56.000000 UTC","74217849","2024-08-07 21:43:48.013000 UTC"
+"1082460486","1184917439","@fivetran-joemarkiewicz thanks for your help! Still confused as to why Fivetran does not export the subscription table but I'll reach out to their support","2022-03-29 23:19:07.000000 UTC","2022-03-29 23:19:07.000000 UTC","5836421","2024-08-07 21:43:48.013000 UTC"
+"1083180839","1184917439","Of course, happy to help! 
+
+When I have seen tables like this not being synced in the past it is usually because there isn't any data available from the endpoint. However, if you have the other subscriptions tables then I would wonder why the base table isn't being synced either. Reaching out to support would be the best next step.
+
+Thanks!","2022-03-30 14:03:12.000000 UTC","2022-03-30 14:03:12.000000 UTC","74217849","2024-08-07 21:43:48.013000 UTC"
+"1083186767","1185564830","Hi @d3ad-pix3l thanks so much for opening this feature request.
+
+Before we talked further about this feature, I did want to bring light to the `metadata` fields that are synced within the Fivetran Stripe connector. This field is a JSON object that contains extra fields and information related to your base tables that weren't awarded their own specific field. This is usually due to the fact that not all customers may have these fields. 
+
+Do you by chance see the `paid_out_of_bond` field within the `metadata` JSON object of your invoice table? If so, you can leverage the feature of this package to [pivot out a metadata field](https://github.com/fivetran/dbt_stripe#pivoting-out-metadata-properties) in order to leverage it in your down stream analysis.
+
+Let me know if this was helpful. If you are unable to find that field in the metadata object then we can chat more about the possible implementation of this feature.
+
+Thanks!","2022-03-30 14:08:11.000000 UTC","2022-03-30 14:08:11.000000 UTC","74217849","2024-08-07 21:43:48.013000 UTC"
+"1083453923","1185564830","@fivetran-joemarkiewicz I checked the `metadata` column on the `invoice` table and did not see this value. Looking in Stripe's UI and their Sigma reporting solution I do not see this value in the metadata. In the Sigma reporting it is a separate column on the `invoices` table.","2022-03-30 18:07:46.000000 UTC","2022-03-30 18:07:46.000000 UTC","24665116","2024-08-07 21:43:48.013000 UTC"
+"1083599809","1185564830","Ah I see this is a field that doesn't exist within the `metadata` column or in the source table at all. If that is the case, then I actually feel that a better first step would be to see if this is something that could be brought into the connector. 
+
+Since there doesn't seem to be a very clear and direct way to identify if an invoice was paid_out_of_bound, I am leaning towards trying to bring the field into the connector instead of attempting to recreate in the dbt package. It actually looks like another customer was hoping to do the same with their [Feature Request](https://support.fivetran.com/hc/en-us/community/posts/4413583931031-Connector-Improvement-Add-out-of-band-amount-column-to-Stripe-s-credit-note-table). I think a best next step would be for you to upvote that FR and comment your need for the field within the invoice table. 
+
+Reaching out to your account rep should also be able to get more eyes on this to be integrated into the connector. Let me know if you have any other questions!","2022-03-30 20:35:35.000000 UTC","2022-03-30 20:35:35.000000 UTC","74217849","2024-08-07 21:43:48.013000 UTC"
+"1083619197","1185564830","@fivetran-joemarkiewicz That makes sense. I was told to create the issue here, but think there might have been some confusion about the ask and what was currently being supported. I have followed and voted the linked feature request and will send an email to our rep. Thanks for your help.","2022-03-30 20:58:19.000000 UTC","2022-03-30 20:58:19.000000 UTC","24665116","2024-08-07 21:43:48.013000 UTC"
+"1083623398","1185564830","Happy to help @d3ad-pix3l 
+
+Yeah I would be happy to support this within the package but it seems like there would be too many edge cases that we wouldn't be able to account for in our logic if we implemented a transformation to recreate the field. Since it seems to be a similar request from other customers, it may be the most beneficial to add this field into the connector itself. I would rather have the connector produce something 100% accurate than try our best to recreate the field in the dbt package and see it not work in all cases. 
+
+I will close this issue as your rep will be able to direct you in the right place following our discussion here. Feel free to have the rep loop me into your correspondence if I can help provide any clarification 😄 ","2022-03-30 21:03:53.000000 UTC","2022-03-30 21:03:53.000000 UTC","74217849","2024-08-07 21:43:48.013000 UTC"
+"1233381183","1235727576","> should this get merged?
+
+We should merge this in the near future. Let's plan to include this in our next breaking change release.","2022-08-31 20:19:40.000000 UTC","2022-08-31 20:19:40.000000 UTC","74217849","2024-08-07 21:43:48.014000 UTC"
+"2125176863","2309523486","Hi @sbailliez, we've noted that the livemode should be syncing as `boolean` instead of `character varying` in the Fivetran connector, which should then help resolve this. Our team's made been aware of this bug. 
+
+To also substantiate this, I would imagine the other models that contain `livemode` are running successfully, given the field's synced correctly as boolean in those respective objects-- can you confirm all other models are ran successfully (`stg_stripe__invoice`, `stg_stripe__credit_note_line_item`, `stg_stripe__payout`, etc)?","2024-05-22 16:10:39.000000 UTC","2024-05-22 16:10:39.000000 UTC","91097070","2024-08-07 21:43:49.273000 UTC"
+"2125627126","2309523486","@fivetran-reneeli I don't use invoices or credit note but no problem for payout. If the data type can be changed in the fivetran  etl that would indeed be a lot better! I'm sticking to stripe 0.9.0 for now. 
+
+Are you planning a release to allow override?
+
+(also apologies but noticed I made a mistake and should have opened that in stripe_source)","2024-05-22 19:47:31.000000 UTC","2024-05-22 19:47:31.000000 UTC","159990","2024-08-07 21:43:49.273000 UTC"
+"1238641487","1284004042","The latest release of the dbt_stripe package accounts for this issue.","2022-09-06 20:56:58.000000 UTC","2022-09-06 20:56:58.000000 UTC","74217849","2024-08-07 21:43:48.014000 UTC"
+"2127444314","2309523486","Thanks @sbailliez! And yes we will aim to work on this in our upcoming sprint that starts mid next week. Just a note we will be at a company offsite so may be slow the first few days to respond.
+
+However, if you are interested in contributing a PR we would be happy to review the PR sooner. We would just plan to modify the `livemode_predicate` macro in the source package to use the adapter dispatch (like we see in our [other package specific macros](https://github.com/fivetran/dbt_facebook_ads/blob/main/macros/facebook_ads_extract_url_parameters.sql) ).
+","2024-05-23 15:37:31.000000 UTC","2024-05-23 15:37:31.000000 UTC","91097070","2024-08-07 21:43:49.273000 UTC"
+"1094603968","1184917439","Looking at the ERD [here](https://docs.google.com/presentation/d/1zyxgbaOjgBt3NsY0OfsiGsWDIefcBc-R1lHWlMltCYU/edit#slide=id.gd0264d4694_14_1), it looks like the `subscription` table is now `subscription_history` if I'm not mistaken. 
+
+I've been running into the error as @shaon-chowdhury. Is there a way using this package that I can remap `subscription` to `subscription_history`? 
+
+I just started using dbt today so I apologize if I'm missing something obvious.","2022-04-11 06:30:39.000000 UTC","2022-04-11 06:30:57.000000 UTC","37898062","2024-08-07 21:43:48.014000 UTC"
+"1095072678","1184917439","Hi @rhinck you can in fact remap the package to point at the `subscription_history` table instead. To do so you can add the following to your `dbt_project.yml`
+
+```yml
+##dbt_project.yml
+
+vars:
+   subscription: ""database.schema.subscription_history""
+```
+
+Likewise, if you would like to create your own source file that includes the `subscription_history` table then you can leverage the dbt source macro, otherwise the above will work just fine.
+
+Further, this is being discussed in more detail within this [PR](https://github.com/fivetran/dbt_stripe_source/pull/37). I hope to have a more permanent solution in place once this PR is merged.","2022-04-11 13:45:29.000000 UTC","2022-04-11 13:45:29.000000 UTC","74217849","2024-08-07 21:43:48.014000 UTC"
+"1095497406","1200401179","This can be tested using the following `packages.yml` config.
+
+```yml
+packages:
+  - git: https://github.com/fivetran/dbt_stripe.git
+    revision: bugfix/nachimehta-subscription-history
+    warn-unpinned: false
+```","2022-04-11 19:50:27.000000 UTC","2022-04-11 19:50:27.000000 UTC","74217849","2024-08-07 21:43:48.014000 UTC"
+"1245439835","1371444129","Hi @nbenezri would you be able to share a snippet of your variables in your root dbt_project.
+
+Defining the variables the way you have shown above should work. I would be curious if maybe there is an error with how the variables are defined within your project.","2022-09-13 13:47:40.000000 UTC","2022-09-13 13:47:40.000000 UTC","74217849","2024-08-07 21:43:48.014000 UTC"
+"1245454873","1371444129","In `stripe__customer_overview` I see the additional column. But for the rest, I do not see.
+
+```
+[nir@dba-dev fivetran_dbt]$ cat dbt_project.yml 
+
+# Name your project! Project names should contain only lowercase characters
+# and underscores. A good package name should reflect your organization's
+# name or the intended use of these models
+name: 'fivetran_dbt'
+version: '1.0.0'
+config-version: 2
+
+# This setting configures which ""profile"" dbt uses for this project.
+profile: 'fivetran_dbt'
+
+# These configurations specify where dbt should look for different types of files.
+# The `model-paths` config, for example, states that models in this project can be
+# found in the ""models/"" directory. You probably won't need to change these!
+model-paths: [""models""]
+analysis-paths: [""analyses""]
+test-paths: [""tests""]
+seed-paths: [""seeds""]
+macro-paths: [""macros""]
+snapshot-paths: [""snapshots""]
+
+target-path: ""target""  # directory which will store compiled SQL files
+clean-targets:         # directories to be removed by `dbt clean`
+  - ""target""
+  - ""dbt_packages""
+
+
+# Configuring models
+# Full documentation: https://docs.getdbt.com/docs/configuring-models
+
+# In this example config, we tell dbt to build all models in the example/ directory
+# as tables. These settings can be overridden in the individual model files
+# using the `{{ config(...) }}` macro.
+models:
+  fivetran_dbt:
+  zendesk:
+    intermediate:
+    sla_policy:
+    ticket_history:
+  zendesk_source:
+  jira:  
+  jira_source:
+  stripe:
+  stripe_source:
+  
+vars:
+  using_schedules: False
+  jira_database: dkall
+  jira_schema: jira
+  #jira:
+  #  issue_field_history_columns: ['the', 'list', 'of', 'field', 'names']
+  stripe_source:
+    stripe_database: dkall
+    stripe_schema: stripe
+  stripe_database: dkall
+  stripe_schema: stripe
+  stripe__subscription_history: True
+  stripe_source:
+    using_invoice_line_sub_filter: false
+  stripe__charge_metadata: ['extras', 'product', 'userid'] # Note: this is case-SENSITIVE and must match the casing of the property as it appears in the JSON
+  stripe__invoice_metadata: ['extras', 'product', 'userid'] 
+  #stripe__payment_intent_metadata: ['the', 'list', 'of', 'property', 'fields'] 
+  #stripe__payment_method_metadata: ['the', 'list', 'of', 'property', 'fields'] 
+  #stripe__payout_metadata: ['the', 'list', 'of', 'property', 'fields'] 
+  #stripe__plan_metadata: ['the', 'list', 'of', 'property', 'fields'] 
+  #stripe__refund_metadata: ['the', 'list', 'of', 'property', 'fields'] 
+  stripe__subscription_metadata: ['extras', 'userid'] 
+  stripe__customer_metadata: ['userid'] 
+  zendesk_source:
+    zendesk_database: dkall
+    zendesk_schema: zendesk
+  zendesk:
+    ticket_field_history_timeframe_years: 1
+
+[nir@dba-dev fivetran_dbt]$ cat packages.yml 
+packages:
+  - package: fivetran/zendesk_source
+    version: ["">=0.7.0"", ""<0.8.0""]
+  - package: fivetran/zendesk
+    version: ["">=0.9.0"", ""<0.10.0""]
+  - package: fivetran/jira_source
+    version: ["">=0.4.0"", ""<0.5.0""]
+  - package: fivetran/jira
+    version: ["">=0.8.0"", ""<0.9.0""]
+  - package: fivetran/stripe_source
+    version: ["">=0.7.0"", ""<0.8.0""]
+  - package: fivetran/stripe
+    version: ["">=0.7.0"", ""<0.8.0""]
+```","2022-09-13 13:58:58.000000 UTC","2022-09-13 14:00:59.000000 UTC","82036810","2024-08-07 21:43:48.014000 UTC"
+"1245465489","1371444129","Thanks so much for sharing these details @nbenezri. The declaration of these variables seems accurate 🤔 
+
+I am especially curious since you mentioned the `stripe__customer_metadata: ['userid'] ` works as intended. Are you able to confirm that for the other metadata variables that the fields are included in the JSON object within the source?","2022-09-13 14:06:55.000000 UTC","2022-09-13 14:06:55.000000 UTC","74217849","2024-08-07 21:43:48.014000 UTC"
+"1245471631","1371444129","They are. and they are appearing in the staging schema. 
+
+```
+dkall=# \d cdp_stg_stripe.stg_stripe__subscription
+        Table ""cdp_stg_stripe.stg_stripe__subscription""
+         Column          |           Type           | Modifiers 
+-------------------------+--------------------------+-----------
+ subscription_id         | character varying(256)   | 
+ status                  | character varying(256)   | 
+ billing                 | character varying(256)   | 
+ billing_cycle_anchor    | timestamp with time zone | 
+ cancel_at               | timestamp with time zone | 
+ is_cancel_at_period_end | boolean                  | 
+ canceled_at             | timestamp with time zone | 
+ created_at              | timestamp with time zone | 
+ current_period_start    | timestamp with time zone | 
+ current_period_end      | timestamp with time zone | 
+ customer_id             | character varying(256)   | 
+ days_until_due          | bigint                   | 
+ metadata                | character varying(256)   | 
+ start_date              | timestamp with time zone | 
+ ended_at                | timestamp with time zone | 
+ extras                  | character varying(256)   | 
+ userid                  | character varying(256)   | 
+
+dkall=# \d cdp_stripe.stripe__subscription_details
+            Table ""cdp_stripe.stripe__subscription_details""
+             Column             |           Type           | Modifiers 
+--------------------------------+--------------------------+-----------
+ subscription_id                | character varying(256)   | 
+ customer_id                    | character varying(256)   | 
+ customer_description           | character varying(256)   | 
+ customer_email                 | character varying(256)   | 
+ status                         | character varying(256)   | 
+ start_date                     | timestamp with time zone | 
+ ended_at                       | timestamp with time zone | 
+ billing                        | character varying(256)   | 
+ billing_cycle_anchor           | timestamp with time zone | 
+ canceled_at                    | timestamp with time zone | 
+ created_at                     | timestamp with time zone | 
+ current_period_start           | timestamp with time zone | 
+ current_period_end             | timestamp with time zone | 
+ days_until_due                 | bigint                   | 
+ is_cancel_at_period_end        | boolean                  | 
+ cancel_at                      | timestamp with time zone | 
+ number_invoices_generated      | bigint                   | 
+ total_amount_billed            | bigint                   | 
+ total_amount_paid              | bigint                   | 
+ total_amount_remaining         | bigint                   | 
+ most_recent_invoice_created_at | timestamp with time zone | 
+ average_invoice_amount         | bigint                   | 
+ average_line_item_amount       | bigint                   | 
+ avg_num_invoice_items          | bigint                   | 
+
+dkall=# \d cdp_stripe.stripe__subscription_line_items
+       Table ""cdp_stripe.stripe__subscription_line_items""
+         Column          |           Type           | Modifiers 
+-------------------------+--------------------------+-----------
+ invoice_id              | character varying(256)   | 
+ number                  | character varying(256)   | 
+ invoice_created_at      | timestamp with time zone | 
+ status                  | character varying(256)   | 
+ due_date                | timestamp with time zone | 
+ amount_due              | bigint                   | 
+ subtotal                | bigint                   | 
+ tax                     | bigint                   | 
+ total                   | bigint                   | 
+ amount_paid             | bigint                   | 
+ amount_remaining        | bigint                   | 
+ attempt_count           | bigint                   | 
+ invoice_memo            | character varying(256)   | 
+ invoice_line_item_id    | character varying(256)   | 
+ line_item_desc          | character varying(256)   | 
+ line_item_amount        | bigint                   | 
+ quantity                | bigint                   | 
+ period_start            | timestamp with time zone | 
+ period_end              | timestamp with time zone | 
+ balance_transaction_id  | character varying(256)   | 
+ charge_amount           | bigint                   | 
+ charge_status           | character varying(256)   | 
+ charge_created_at       | timestamp with time zone | 
+ customer_description    | character varying(256)   | 
+ customer_email          | character varying(256)   | 
+ customer_id             | character varying(256)   | 
+ subscription_id         | character varying(256)   | 
+ subscription_billing    | character varying(256)   | 
+ subscription_start_date | timestamp with time zone | 
+ subscription_ended_at   | timestamp with time zone | 
+ plan_id                 | character varying(256)   | 
+ plan_is_active          | boolean                  | 
+ plan_amount             | bigint                   | 
+ plan_interval           | character varying(256)   | 
+ plan_interval_count     | bigint                   | 
+ plan_nickname           | character varying(256)   | 
+ plan_product_id         | character varying(256)   | 
+```","2022-09-13 14:11:20.000000 UTC","2022-09-13 14:16:37.000000 UTC","82036810","2024-08-07 21:43:48.014000 UTC"
+"801222523","833268931","Will want to add final model field name changes to release notes","2021-03-17 16:23:23.000000 UTC","2021-03-17 16:23:23.000000 UTC","74217849","2024-08-07 21:43:47.635000 UTC"
+"1245542623","1371444129","Hi @nbenezri my apologies as I misread your initial question. I was under the assumption you were unable to replicate the metadata fields in the staging models.
+
+Currently the package only brings the customer metadata fields through to the final model. The other metadata fields are restricted to the staging models. If you are looking to bring other metadata fields through to the final models we can use this issue as a feature and plan to incorporate them in a future release.
+
+For the time being, if you wanted to bring in the metadata fields prior to our feature update I would recommend either one of the following options:
+- Create your own model that references the end model produced by the package and join in the metadata fields from the staging model.
+- Disable the package model and recreate it in your own project with you metadata fields included.
+   - To disable the model you can use the below config.
+   - You will then create a model with the same name (`stripe__invoice_line_items`) in your root dbt project and copy/paste the sql used and edit it to your liking.
+```yml
+models:
+  stripe:
+     stripe__invoice_line_items:
+        +enabled: false
+```
+
+You are correct that since the package contents are stored in the `dbt_packages` folder, you are unable to edit them directly. However, you can use one of the options above to customize them to your liking. I hope this helps!","2022-09-13 15:00:22.000000 UTC","2022-09-13 15:00:22.000000 UTC","74217849","2024-08-07 21:43:48.393000 UTC"
+"801339896","747880282","Addressed in PR #8 ","2021-03-17 19:09:58.000000 UTC","2021-03-17 19:09:58.000000 UTC","74217849","2024-08-07 21:43:47.635000 UTC"
+"801340033","744933593","Addressed in PR #8 ","2021-03-17 19:10:10.000000 UTC","2021-03-17 19:10:10.000000 UTC","74217849","2024-08-07 21:43:47.636000 UTC"
+"1246406693","1371444129","Is there a more detailed walkthrough on how to recreate/fork a model to the side? 
+
+**EDIT** I will be more specific, working on the customers model:
+1. I've disabled the customers model 
+2. I've copied the SQL to `models/`
+3. changed `var('customers')` to `ref('stg_stripe__customer')`
+
+I now get 
+```
+09:23:08  1 of 1 ERROR creating view model cdp.stripe__customer_overview ................. [ERROR in 0.04s]
+09:23:08  
+09:23:08  Finished running 1 view model, 1 hook in 0 hours 0 minutes and 1.69 seconds (1.69s).
+09:23:08  
+09:23:08  Completed with 1 error and 0 warnings:
+09:23:08  
+09:23:08  Compilation Error in model stripe__customer_overview (models/stripe__customer_overview.sql)
+09:23:08    'date_timezone' is undefined. This can happen when calling a macro that does not exist. Check for typos and/or install package dependencies with ""dbt deps"".
+```
+
+A few questions:
+1. how to make those packages available to `models/`?
+**A:** `[nir@dba-dev stripe]$ cp macros/date_timezone.sql ../../macros/`
+2. how to make variables specific to a certain model?  because I would like to copy `dbt_packages/stripe/dbt_project.yml` I'm my main one so all the SQL I copy will work, and so they won't coliade with other packages/models.
+3. how to change the target materialized from a view to a table?
+4. how to change the target schema?
+
+copying the dbt_project from dbt_packages doesn't work...
+```
+  The schema file at models/stripe/dbt_project.yml is invalid because the value of 'models' is not a list
+```","2022-09-14 08:15:37.000000 UTC","2022-09-14 12:32:41.000000 UTC","82036810","2024-08-07 21:43:48.419000 UTC"
+"1246877905","1371444129","Hi @nbenezri if you wanted to fork the repo and make your changes directly in your own fork that may be easiest. You can then install your fork (with your custom changes) instead of our package. You would use the following syntax in your `packages.yml` to install your forked version of the package.
+```yml
+packages:
+  - git: https://github.com/nbenezri/dbt_stripe.git
+    revision: custom-branch
+    warn-unpinned: false
+```
+
+This way you can make whatever changes you want directly in your own codebase and it will still be installed as a package. This will allow you to circumvent the need for disabling and copy/pasting which can result in a bunch of headache and compilation errors as dbt has a bunch of rules with disabling and having models with the same name.
+
+You make a great point though that it would be helpful for us to possibly put together a guide for customers on how to fork or edit package code if needed.","2022-09-14 14:45:28.000000 UTC","2022-09-14 14:45:51.000000 UTC","74217849","2024-08-07 21:43:48.419000 UTC"
+"1247847340","1371444129","Work like a charm! thanks! 
+If you want I can share the dbt modifications I did.","2022-09-15 09:37:42.000000 UTC","2022-09-15 09:37:42.000000 UTC","82036810","2024-08-07 21:43:48.420000 UTC"
+"1248109671","1371444129","Brilliant! Yeah if you wanted to share your fork I would be happy to take a look. 
+
+We have also had a few individuals in the past open PRs from their forks to contribute the code back into the package. I can look through your updates and if they make sense for the larger user base, we can work to incorporate it!","2022-09-15 13:33:54.000000 UTC","2022-09-15 13:33:54.000000 UTC","74217849","2024-08-07 21:43:48.420000 UTC"
+"1248362597","1371444129","[Archive.zip](https://github.com/fivetran/dbt_stripe/files/9577377/Archive.zip)
+
+Repo is private - can't share it. But here are the files.","2022-09-15 16:51:21.000000 UTC","2022-09-15 16:51:21.000000 UTC","82036810","2024-08-07 21:43:48.420000 UTC"
+"1248364058","1371444129","BTW I know this is not your field anymore, but I push this change into master and the schedule in fivetran transformation is acting up.
+Getting:
+
+```
+Execution Failure. dbt packages failed to install. The 'dbt deps' command had the following execution result: 
+Command exit code: 2
+stderr: 
+Traceback (most recent call last):
+  File ""/usr/local/lib/python3.8/dist-packages/dbt/clients/git.py"", line 65, in clone
+    result = run_cmd(cwd, clone_cmd, env={""LC_ALL"": ""C""})
+  File ""/usr/local/lib/python3.8/dist-packages/dbt/clients/system.py"", line 435, in run_cmd
+    raise dbt.exceptions.CommandResultError(cwd, cmd, proc.returncode, out, err)
+dbt.exceptions.CommandResultError: Got a non-zero returncode running: ['/usr/bin/git', 'clone', '--depth', '1', 'git@bitbucket.org:distrokid/fivetran-dbt-stripe.git', '66682aa22add127acad34de7b8f7fbf5']
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File ""/usr/local/lib/python3.8/dist-packages/dbt/main.py"", line 129, in main
+    results, succeeded = handle_and_check(args)
+  File ""/usr/local/lib/python3.8/dist-packages/dbt/main.py"", line 192, in handle_and_check
+    task, res = run_from_args(parsed)
+  File ""/usr/local/lib/python3.8/dist-packages/dbt/main.py"", line 239, in run_from_args
+    results = task.run()
+  File ""/usr/local/lib/python3.8/dist-packages/dbt/task/deps.py"", line 56, in run
+    final_deps = resolve_packages(packages, self.config)
+  File ""/usr/local/lib/python3.8/dist-packages/dbt/deps/resolver.py"", line 131, in resolve_packages
+    target = final[package].resolved().fetch_metadata(config, renderer)
+  File ""/usr/local/lib/python3.8/dist-packages/dbt/deps/base.py"", line 86, in fetch_metadata
+    self._cached_metadata = self._fetch_metadata(project, renderer)
+  File ""/usr/local/lib/python3.8/dist-packages/dbt/deps/git.py"", line 93, in _fetch_metadata
+    path = self._checkout()
+  File ""/usr/local/lib/python3.8/dist-packages/dbt/deps/git.py"", line 79, in _checkout
+    dir_ = git.clone_and_checkout(
+  File ""/usr/local/lib/python3.8/dist-packages/dbt/clients/git.py"", line 137, in clone_and_checkout
+    _, err = clone(
+  File ""/usr/local/lib/python3.8/dist-packages/dbt/clients/git.py"", line 67, in clone
+    _raise_git_cloning_error(repo, revision, exc)
+  File ""/usr/local/lib/python3.8/dist-packages/dbt/clients/git.py"", line 37, in _raise_git_cloning_error
+    bad_package_spec(repo, revision, stderr)
+  File ""/usr/local/lib/python3.8/dist-packages/dbt/exceptions.py"", line 735, in bad_package_spec
+    raise InternalException(scrub_secrets(msg, env_secrets()))
+dbt.exceptions.InternalException: Error checking out spec='None' for repo git@bitbucket.org:distrokid/fivetran-dbt-stripe.git
+Cloning into '66682aa22add127acad34de7b8f7fbf5'...
+fatal: unable to fork
+stdout: 
+16:27:41  Running with dbt=1.2.0
+16:27:42  Encountered an error:
+Error checking out spec='None' for repo git@bitbucket.org:distrokid/fivetran-dbt-stripe.git
+Cloning into '66682aa22add127acad34de7b8f7fbf5'...
+fatal: unable to fork
+```
+
+If you have any idea why it unable to fork it...","2022-09-15 16:52:53.000000 UTC","2022-09-15 16:52:53.000000 UTC","82036810","2024-08-07 21:43:48.420000 UTC"
+"1248421811","1371444129","Hey @nbenezri no worries at all. Hopefully I can help.
+
+What are the contents of your `packages.yml` file?","2022-09-15 17:53:43.000000 UTC","2022-09-15 17:53:43.000000 UTC","74217849","2024-08-07 21:43:48.420000 UTC"
+"1248643739","1371618240","> Hey @fivetran-joemarkiewicz, everything looks good to me. I just had the same question I had in the source - and a reminder to update `packages.yml` before release as you've already commented for yourself :)
+> 
+> Do you intend to keep those `stripe_*` schema names for `integration_tests/ci/sample.profiles.yml`?
+
+Thanks @fivetran-sheringuyen great call out, just updating those now!","2022-09-15 21:20:21.000000 UTC","2022-09-15 21:20:21.000000 UTC","74217849","2024-08-07 21:43:48.420000 UTC"
+"1249007104","1371444129","```
+packages:
+  - package: fivetran/zendesk_source
+    version: ["">=0.7.0"", ""<0.8.0""]
+  - package: fivetran/zendesk
+    version: ["">=0.9.0"", ""<0.10.0""]
+  - package: fivetran/jira_source
+    version: ["">=0.4.0"", ""<0.5.0""]
+  - package: fivetran/jira
+    version: ["">=0.8.0"", ""<0.9.0""]
+  - package: fivetran/stripe_source
+    version: ["">=0.7.0"", ""<0.8.0""]
+  - git: git@bitbucket.org:<company>/fivetran-dbt-stripe.git
+    revision: main
+    warn-unpinned: false
+```
+
+It should work as both repo's (`fivetran-dbt-stripe`, and this one) in the same master repo. So the ssh key should work for both (it works for this one).
+If I change to https it request user/pass.","2022-09-16 07:16:52.000000 UTC","2022-09-18 07:08:45.000000 UTC","82036810","2024-08-07 21:43:48.420000 UTC"
+"1101432225","1206769216","Hi @johnf thanks so much for opening this issue!
+
+I see exactly what you are talking about with postgres support for the macro is not possible at the moment. However, you do call out a good point with how dbt_utils handles this currently for postgres. To adjust this macro to allow for postgres support I believe all we would need to do is open a PR that adds a new `postgres__date_timezone(column)` section within the macro. Similar to how we have it for bigquery:
+https://github.com/fivetran/dbt_stripe/blob/de061f7ac38f49b029b95e4dffe01becb930ff05/macros/date_timezone.sql#L7-L14
+
+I noticed you mentioned you would be open to creating a PR on your end! We are always excited when people from the community want to contribute back to our packages. Please let me know if you would like to work on a PR to account for postgres compatibility in this macro. I am happy to help answer any questions you may have!
+
+Otherwise, my team can tackle this issue in a future sprint. Let me know!
+","2022-04-18 14:02:29.000000 UTC","2022-04-18 14:02:29.000000 UTC","74217849","2024-08-07 21:43:48.014000 UTC"
+"1101824633","1206769216","PR ready to roll! :) ","2022-04-18 22:40:06.000000 UTC","2022-04-18 22:40:06.000000 UTC","42590","2024-08-07 21:43:48.014000 UTC"
+"1102667648","1207523587","Thanks so much for opening this PR @johnf!! 🙌 
+
+I will have someone from my team review this PR in the coming sprint (starting Thursday) and will let you know if we have any questions before merging and including in our next release 😄 ","2022-04-19 13:37:39.000000 UTC","2022-04-19 13:37:39.000000 UTC","74217849","2024-08-07 21:43:48.014000 UTC"
+"1399035971","1500541167","Reminder to 
+
+- [ ] 1. regen docs
+- [ ] 2. check docs
+- [ ] 3. change package deps","2023-01-20 22:39:18.000000 UTC","2023-01-20 22:39:18.000000 UTC","91097070","2024-08-07 21:43:48.849000 UTC"
+"1251246381","1235727576","These updates have been included in PR #44 ","2022-09-19 16:22:02.000000 UTC","2022-09-19 16:22:02.000000 UTC","74217849","2024-08-07 21:43:48.420000 UTC"
+"807306948","841199454","@fadhguru thank you for creating this issue, and it was great meeting you earlier today.
+
+We'll add this feature request to our backlog and let you know when this is implemented.","2021-03-25 19:11:15.000000 UTC","2021-03-25 19:11:15.000000 UTC","54283769","2024-08-07 21:43:47.636000 UTC"
+"807665329","840996022","this LGTM! though i'm wondering if we should update the variable names to be prefixed...maybe for another PR....","2021-03-25 22:53:10.000000 UTC","2021-03-25 22:53:32.000000 UTC","65564846","2024-08-07 21:43:47.636000 UTC"
+"1252522662","1371444129","Would love some help @fivetran-joemarkiewicz ","2022-09-20 15:23:52.000000 UTC","2022-09-20 15:24:06.000000 UTC","82036810","2024-08-07 21:43:48.420000 UTC"
+"1252534839","1371444129","@nbenezri do the package installs on `dbt deps` work locally? Is the only issue when deploying it, or does it fail locally as well?","2022-09-20 15:33:29.000000 UTC","2022-09-20 15:33:29.000000 UTC","74217849","2024-08-07 21:43:48.420000 UTC"
+"1252600764","1371444129","Locally it works. Actually, until the issue is solved, I use crontab from my server instead of Fivetran's transformation schedule.","2022-09-20 16:26:51.000000 UTC","2022-09-20 16:26:51.000000 UTC","82036810","2024-08-07 21:43:48.420000 UTC"
+"1400750137","1553040105","Hi @nbenezri thanks for opening this issue! 
+
+Just to confirm I understand, are you saying that after the refreshed table gets created again, you're unable to query from it? But by renaming the table then you can? I'm having trouble understanding why it's unable to be queried in the first place. Or, can you query in dev, just not in prod? ","2023-01-23 17:56:38.000000 UTC","2023-01-23 17:56:38.000000 UTC","91097070","2024-08-07 21:43:48.850000 UTC"
+"1252652229","1371444129","Since it works locally, I imagine this is something that needs to be addressed at the Fivetran Transformations layer. Unfortunately, I am not part of this team but I would recommend opening a [Support Ticket](https://support.fivetran.com/hc/en-us) (if you have not already) to help resolve this issue.
+
+I apologize I am unable to help address this, but I do believe it has something to do with how Fivetran Transformations talks to other repos.","2022-09-20 17:08:54.000000 UTC","2022-09-20 17:08:54.000000 UTC","74217849","2024-08-07 21:43:48.420000 UTC"
+"1401535857","1553040105","When the refreshes going on it is unavailable. In the above example, during 09:12:05 - 09:15:08.","2023-01-24 08:19:14.000000 UTC","2023-01-24 08:19:14.000000 UTC","82036810","2024-08-07 21:43:48.850000 UTC"
+"1551453517","1713202702","Hi @pietrotansini thanks for opening this issue! 
+
+We have actually seen a number of these issues sprout up over the last week across all our Fivetran dbt packages. It seems to be due to newer BigQuery driver that handles JSON datatypes differently. My team and I are currently investigating and are hoping to respond soon with a possible fix.
+
+Be sure to follow this issue for more updates!","2023-05-17 14:00:17.000000 UTC","2023-05-17 14:00:17.000000 UTC","74217849","2024-08-07 21:43:49.261000 UTC"
+"1256617142","1120843886","hey @d3ad-pix3l, picking this up again! were there any cases in which
+```
+invoices.subscription_id != invoice_line_items.subscription_id 
+and invoices.subscription_id is not null 
+and invoice_line_items.subscription_id is not null
+```
+
+
+and could you explain the difference in the two environments you ran that query in? is the data warehouse your Fivetran-piped Stripe data? ","2022-09-23 19:55:27.000000 UTC","2022-09-23 19:55:27.000000 UTC","65564846","2024-08-07 21:43:48.420000 UTC"
+"1256651333","1120843886","@fivetran-jamie I was testing the data in the data warehouse from which Fivetran piped in Stripe data and using the built-in query writer in Stripe via Sigma. I am no longer working on this project however, so I cannot provide any additional information beyond what I provided previously.","2022-09-23 20:39:58.000000 UTC","2022-09-23 20:39:58.000000 UTC","24665116","2024-08-07 21:43:48.420000 UTC"
+"1109114523","1120843886","I did some additional testing against our production data.
+
+First, I validated data within Stripe alone to check differences between the `subscription_id` between the two tables in question:
+
+```
+with invoice_subs as (
+  
+    select
+      invoices.id as invoice_id,
+      invoices.date as invoice_created_at,
+      invoices.status as invoice_status,
+      invoices.subscription_id,
+      invoices.total / 100.00 as invoice_total,
+      invoice_line_items.source_type,
+      invoice_line_items.proration as is_proration,
+      invoice_line_items.subscription as invoice_line_item_sub_id,
+      invoice_line_items.amount / 100.00 as invoice_line_item_amount,
+      case when invoices.subscription_id = invoice_line_items.subscription
+        then true
+      else false end as sub_matches,
+      prices.id as price_id,
+      prices.recurring_interval,
+      products.id as product_id,
+      products.active as is_active
+
+    from invoices
+
+    join invoice_line_items 
+      on invoices.id = invoice_line_items.invoice_id
+    left join prices
+      on invoice_line_items.price_id = prices.id
+    left join products
+      on prices.product_id = products.id
+  
+  )
+  
+  select * from invoice_subs where sub_matches = false
+```
+  
+
+I exported the data and reviewed several scenarios and pulled up invoices in the UI to confirm my findings. See below:
+
+- Reviewing invoices, invoice line items, subscriptions data in Stripe where the `subscription_id` does not match between the `invoices` and `invoice_line_items`. Total count: 4,600
+	- The `invoice_line_items` that do not have a `subscription_id`  and `invoices` does. Total count: 625
+		- All but 1 were related to proration and all were `invoiceitem` source type.
+		- Spot checking some of these and they have multiple line items that appear related to subscription changes so I would have expected a `subscription_id` on the `invoice_line_items` instead.
+		- Only 16 were related to invoices where the `total` was greater than 0.
+		- There doesn't appear to be any trends related to timing of the creation of the invoices. Seen as far back as August 2016 and as recent as the April 2022.
+		- Conclusion: These invoices were either created in a way that broke the `invoice_line_items` relationship or there is a bug.
+	- The `invoice_line_items` that do have a `subscription_id` and `invoices` does not is related to proration where each line item links to the current and previous subscription. Total count: 3888
+		- Note: there were 3 that weren't related to proration, but they were `One-time` price/products  - not sure why a `subscription_id` would be recorded for these.
+		- Conclusion: Other than the 3, this was an expected difference. I do not believe it is worth investigating further.
+	- Both the `invoice_line_items` and `invoices` `subscription_id` are `null`. Total count: 87
+		- All but 1 are related to `One-time` price/products. The single exception also showed `subscription` as the source type. Not sure why a `subscription_id` wasn't recorded.
+		- Conclusion: Other than the 1, this was an expected result. I do not believe it is worth investigating further.
+	- Overall conclusion: There appears to be scenarios where only the `invoices` records a `subscription_id` which is a cause for concern if only relying on the `invoice_line_items` table. It is unclear to me if this problem is created by the implementation and creation of the invoices on our end or is caused by a bug. In either case, it may make sense to fallback to the `invoices.subscription_id` if there is no `invoice_line_items.subscription_id`.
+
+The next step is checking against the data being synced to our data warehouse which when running a similar query gave far more results which leads me to believe there are changes happening on the invoice and/or the line items that isn't syncing or there is a delay. More to come.
+
+Update: When running the same query against the data warehouse:
+
+- There was an additional 4,325 records that do not have a `invoice_line_items.subscription_id`.
+	- All of them show as `subscription` type.
+	- Only 28 records were prior to 01/01/22 with the oldest being Sept 2019.
+	- The `invoice_line_item.id` appears to reflect the `subscription_id` for these records.
+	- Conclusion: There appears to be a long delay or bug with syncing, updating the `invoice_line_items` records to reflect the correct IDs. This has significant impact since this value would be used to filter and join subscription data.
+- Additional testing: I did the same query using `invoice_items` and that came much closer to the sources differences. 4,577. Though, in both the source and destination it would appear this table has less records than the `invoice_line_items` table and is missing some needed columns.","2022-04-25 22:48:48.000000 UTC","2022-04-25 23:59:28.000000 UTC","24665116","2024-08-07 21:43:48.014000 UTC"
+"1405672704","1553040105","Hi @nbenezri sorry for the delay! I understand the issue you're experiencing, though this is the way dbt works as is it runs a create or replace statement. I think the issue may be better resolved looking at how your environment is set up. I would suggest working with your engineering team to make sure your dashboards are still available during table refreshes-- there should be some kind of best practices for when prod goes offline temporarily.","2023-01-26 21:24:47.000000 UTC","2023-01-26 21:24:47.000000 UTC","91097070","2024-08-07 21:43:48.850000 UTC"
+"961434925","997540035","See https://github.com/fivetran/dbt_stripe/pull/21","2021-11-04 21:21:27.000000 UTC","2021-11-04 21:21:27.000000 UTC","91097070","2024-08-07 21:43:47.656000 UTC"
+"1258107576","1383635883","Hi @LewisDavies thanks so much for opening this issue. This is a very interesting error you are coming across. I have a few quick questions to better understand the root of the issue:
+- Can you confirm for the full stop case `feature.id`, that the field name in the JSON object is indeed listed as `feature.id`. I don't imagine the JSON macro we have that pivots the fields would be causing this, but want to confirm the source is accurate and we just need to account for these edge cases.
+- Similar to the above, do you know if Stripe has any guardrails in place for these metadata fields? For example, can fields be created with special characters? If so, we will need to add regex matching into the code logic to account (find and replace) for these special characters.
+- Would you be able to share the contents of the `target/run/stripe_source/models/stg_stripe__plan.sql` file? I am curious to see how the compiled sql looks for this model.
+
+In addition to the above questions, I feel the `set` issue may possibly be able to be addressed by double quoting the fields in the variable list. Would you be able to attempt the following:
+```yml
+vars:
+    stripe__plan_metadata: ['""set""','feature.id','etc.']
+```
+
+I am not positive it will work, but would be worth the try! I will keep digging in on my end to see if there is a better way to address the reserved word issue. In the meantime, it would be great if you could help provide details to my above questions as well. Thanks so much again for raising this with our team 😄 ","2022-09-26 14:15:13.000000 UTC","2022-09-26 14:15:13.000000 UTC","74217849","2024-08-07 21:43:48.420000 UTC"
+"1555128638","1713202702","Hi @pietrotansini I have been able to explore this a bit further and have been able to identify the core issue. It seems new connectors set up against a BigQuery destination are syncing JSON fields as a JSON datatype; however, previous connectors are syncing JSON fields as a STRING datatype. As such, when the package is attempting to union the tables across schemas it is finding conflicting datatypes for the `metadata` field (as some are STRING type and others are JSON type).
+
+Unfortunately there is not much we can do within the dbt package itself. Especially as we are unable to do a JSON to STRING or STRING to JSON cast. My recommendation at the moment would be to open a [support ticket](https://support.fivetran.com/hc/en-us) to discuss the issue you are seeing with our support team as they will be able to help with any next steps in triaging the datatype mismatch you are seeing.","2023-05-19 19:22:08.000000 UTC","2023-05-19 19:22:08.000000 UTC","74217849","2024-08-07 21:43:49.261000 UTC"
+"1407586444","1553040105","Yeah, I will rename the tables after each refresh.
+I thought there might be something simpler.
+
+
+*Thanks,*
+*Nir Ben Ezri*
+*DBA Team Lead*
+*DistroKid*
+*https://distrokid.com* <https://distrokid.com/>
+
+
+On Thu, Jan 26, 2023 at 11:24 PM Renee Li ***@***.***> wrote:
+
+> Hi @nbenezri <https://github.com/nbenezri> sorry for the delay! I
+> understand the issue you're experiencing, though this is the way dbt works
+> as is it runs a create or replace statement. I think the issue may be
+> better resolved looking at how your environment is set up. I would suggest
+> working with your engineering team to make sure your dashboards are still
+> available during table refreshes-- there should be some kind of best
+> practices for when prod goes offline temporarily.
+>
+> —
+> Reply to this email directly, view it on GitHub
+> <https://github.com/fivetran/dbt_stripe/issues/57#issuecomment-1405672704>,
+> or unsubscribe
+> <https://github.com/notifications/unsubscribe-auth/ATR4QSVYVLWF5KAAO2SJP7LWULTSXANCNFSM6AAAAAAUDZTMCM>
+> .
+> You are receiving this because you were mentioned.Message ID:
+> ***@***.***>
+>
+","2023-01-29 07:28:30.000000 UTC","2023-01-29 07:28:30.000000 UTC","82036810","2024-08-07 21:43:48.850000 UTC"
+"1112344914","1206769216","Hi @johnf, thank you for opening the PR! We've tested and included your changes to the package. Closing this issue! ","2022-04-28 15:25:11.000000 UTC","2022-04-28 15:25:11.000000 UTC","91097070","2024-08-07 21:43:48.014000 UTC"
+"1409302801","1500541167","- [ ] docs regen 
+- [ ] change package deps","2023-01-30 20:40:05.000000 UTC","2023-01-30 20:40:05.000000 UTC","91097070","2024-08-07 21:43:48.850000 UTC"
+"1411002595","1403442848","Closing this issue out as the currency field is now incorporated in our invoice models!","2023-01-31 20:14:47.000000 UTC","2023-01-31 20:14:47.000000 UTC","91097070","2024-08-07 21:43:48.850000 UTC"
+"1411006206","1383635883","Closing this out as we have updated the package to allow for the metadata json field to be pivoted out. For instructions on how to correctly set it up we've included info in the [README](https://github.com/fivetran/dbt_stripe/blob/main/README.md#pivoting-out-metadata-properties)! ","2023-01-31 20:17:58.000000 UTC","2023-01-31 20:17:58.000000 UTC","91097070","2024-08-07 21:43:48.850000 UTC"
+"1411112323","1371444129","Closing this issue out as we have now introduced the [ability to bring metadata fields](https://github.com/fivetran/dbt_stripe/blob/main/README.md#pivoting-out-metadata-properties) into select staging models!","2023-01-31 21:46:46.000000 UTC","2023-01-31 21:46:46.000000 UTC","91097070","2024-08-07 21:43:48.850000 UTC"
+"1411113652","1120858093","Closing this issue out as we've added more [context](https://github.com/fivetran/dbt_stripe/blob/main/README.md#including-sub-invoice-line-items) in our README.","2023-01-31 21:48:08.000000 UTC","2023-01-31 21:48:08.000000 UTC","91097070","2024-08-07 21:43:48.850000 UTC"
+"1411134974","1120843886","`Subscription_id` is now brought into the [invoice staging model](https://github.com/fivetran/dbt_stripe_source/blob/b5b8423fa89c93112991a7aca2237fa56a844898/models/stg_stripe__invoice.sql#L33). While it is brought into the downstream [`invoice_details` ](https://github.com/fivetran/dbt_stripe/blob/main/models/stripe__invoice_details.sql)model via the subscription object, it is being joined to the invoice via `invoice.subscription_id`. ","2023-01-31 22:08:41.000000 UTC","2023-01-31 22:08:41.000000 UTC","91097070","2024-08-07 21:43:48.850000 UTC"
+"1412396260","1553040105","Yeah, this is something more likely within dbt-core or your internal architecture! Will close this issue as this falls outside the realm of our packages ","2023-02-01 17:00:03.000000 UTC","2023-02-01 17:00:03.000000 UTC","91097070","2024-08-07 21:43:48.850000 UTC"
+"969186184","1053954498","HI @peter-dimov thanks for opening this Bug Report and I am sorry to see you are getting this `date_add` error. Would you be able to check for me what the datatype of the `available_on` field within the stripe source `balance_transaction` is? 
+
+I see the `date_add` macro is being used in the below line and I wonder if the datatype within the source is the cause of this strange error. Additionally, is this the first time you are using the package and seeing this error? Or did this error come out of the blue?
+
+https://github.com/fivetran/dbt_stripe/blob/295b59dca6a4a498dcc8b4f631c9c916976f3e5a/models/stripe__balance_transactions.sql#L74","2021-11-15 18:16:31.000000 UTC","2021-11-15 18:16:31.000000 UTC","74217849","2024-08-07 21:43:47.657000 UTC"
+"969196625","1053954498","@fivetran-joemarkiewicz thx for quick reply
+
+Type seems to be alright (timestamp w tz) -- I'm using this directly on top of the fivetran source data
+
+I forgot to add, but I think this may be a compilation error? Here's what I get when trying to compile the model:
+```
+Server error: Compilation Error in rpc request (from remote system)
+Required var 'balance_transaction' not found in config:
+Vars supplied to request = {
+""stripe_database"": ""warehouse"",
+""stripe_schema"": ""landing_stripe"",
+""stripe_timezone"": ""America/Toronto""
+}
+
+> in rpc request (from remote system)
+> called by rpc request (from remote system)
+```
+","2021-11-15 18:29:18.000000 UTC","2021-11-15 18:29:18.000000 UTC","57108096","2024-08-07 21:43:47.657000 UTC"
+"969204800","1053954498","> I forgot to add, but I think this may be a compilation error? Here's what I get when trying to compile the model:
+
+Are you using dbt cloud? I have found that dbt cloud does not like compiling dbt package models directly from the dbt modules folder. This is why you are seeing this issue.
+
+Would you be able to confirm in your Redshift instance what the datatype is?","2021-11-15 18:40:09.000000 UTC","2021-11-15 18:40:19.000000 UTC","74217849","2024-08-07 21:43:47.657000 UTC"
+"969213199","1053954498","In the meantime, I wonder if casting the `available_on` field in the stripe_source package to timestamp would solve this issue? As I have seen in the past the `timestamptz` data type does not work well with the `date_add` macro. Would you be able to try the below packages.yml dependency in place of the dbt hub versions and let me know if the compilation error still persists on `dbt run`?
+
+```yml
+packages:
+  - git: https://github.com/fivetran/dbt_stripe.git
+    revision: bugfix/timestamp-tz-fix
+    warn-unpinned: false
+```","2021-11-15 18:51:22.000000 UTC","2021-11-15 18:51:22.000000 UTC","74217849","2024-08-07 21:43:47.657000 UTC"
+"969223218","1053954498","Type: Timestamp with timezone
+
+Yes, using dbt cloud. That revision worked! Although, some similar errors seem to be coming up on the following models (customer_overview, daily_overview) 
+
+```
+function convert_timezone(""unknown"", timestamp with time zone) does not exist
+```
+","2021-11-15 19:03:42.000000 UTC","2021-11-15 19:03:42.000000 UTC","57108096","2024-08-07 21:43:47.657000 UTC"
+"969233630","1053954498","Ah ha we are getting closer! I just pushed the same update for the `created_at` field within `balance_transactions`. Would you be able to try again?","2021-11-15 19:14:53.000000 UTC","2021-11-15 19:14:53.000000 UTC","74217849","2024-08-07 21:43:47.657000 UTC"
+"969246256","1053954498","No luck on that one still getting the same errors in customer_overview and daily_overview
+
+Noticing some of the convert_timezone calls use 'created_at' while others use the macro 'dbt_utils.current_timestamp()'
+
+Logs don't trace which one is causing the issue","2021-11-15 19:30:00.000000 UTC","2021-11-15 19:30:00.000000 UTC","57108096","2024-08-07 21:43:47.657000 UTC"
+"969307348","1053954498","Hmm I would have thought converting `created_at` in `balance_transactions` would do the trick?
+
+Would you be able to run `dbt deps` again to make sure you are bringing in the latest commit I made on the branch?","2021-11-15 20:48:34.000000 UTC","2021-11-15 20:48:34.000000 UTC","74217849","2024-08-07 21:43:47.657000 UTC"
+"969315656","1053954498","Yep already reran dbt deps and dbt run stripe_source","2021-11-15 21:00:09.000000 UTC","2021-11-15 21:00:09.000000 UTC","57108096","2024-08-07 21:43:47.657000 UTC"
+"970762503","1053954498","Hi @peter-dimov I attempted the casting locally and it seems to have fixed the issue. Would you be able to share the datatype of the `created_at` field? I looked through Redshift docs and it seems this issue really only persists if the datatype is varchar?
+
+I doubt that `created_at` is varchar, but would be interested if that is truly the case in your warehouse.","2021-11-16 22:50:25.000000 UTC","2021-11-16 22:50:25.000000 UTC","74217849","2024-08-07 21:43:47.657000 UTC"
+"971013758","1053954498","@fivetran-joemarkiewicz Found a fix!
+
+Taking off 
+
+```  stripe_timezone: ""America/Toronto"" ```
+
+from the vars does the trick. Seems everything is fine from a datatype perspective. 
+
+P.S. It also breaks if I put ""America/New_York"" like in your docs 
+","2021-11-17 01:14:15.000000 UTC","2021-11-17 01:14:15.000000 UTC","57108096","2024-08-07 21:43:47.657000 UTC"
+"971600724","1053954498","Thanks for looking into that! It seems we will still want to push a fix to cast the datatype of `available_on` in the source package since the original issue will persist otherwise.
+
+However, you mentioning the timezone variable is causing the failures makes me think a similar correction needs to be applied to the [date_timezone](https://github.com/fivetran/dbt_stripe/blob/main/macros/date_timezone.sql) macro. I will look further into that.","2021-11-17 13:50:09.000000 UTC","2021-11-17 13:50:09.000000 UTC","74217849","2024-08-07 21:43:47.657000 UTC"
+"1564153063","1713202702","Thank you Joe for the details. I'll open a ticket with your support team to understand how we can deal with the different datatype","2023-05-26 10:11:24.000000 UTC","2023-05-26 10:11:24.000000 UTC","62239865","2024-08-07 21:43:49.261000 UTC"
+"2158789018","2309523486","Hi @sbailliez. To update you, our engineering team has just released a connector update ([release notes](https://fivetran.com/docs/connectors/applications/stripe/changelog#june2024)) to change the datatype of `livemode` to boolean, which should fix the issue. If you drop the TRANSFER table and re-sync it, that should resolve the error.
+
+Because of this I'm going to mark this ticket as something we won't fix, but please let us know whether this resolves your error!","2024-06-10 16:13:28.000000 UTC","2024-06-10 16:13:28.000000 UTC","111930712","2024-08-07 21:43:49.273000 UTC"
+"1273330651","1383635883","Hey @fivetran-joemarkiewicz, sorry for the slow reply.
+
+- The full stops are in the field names taken from Stripe, so the name appears as `feature.id` in the raw data Fivetran has imported.
+- There don't seem to be any guardrails around the field names other than [how many you can add and how long they are](https://stripe.com/docs/api/metadata).
+- The full file is pretty long but the key part is in the `final` CTE:
+```
+replace(json_extract_path_text(try_parse_json( metadata ), 'plan.id' ), '""', '') as plan.id,
+replace(json_extract_path_text(try_parse_json( metadata ), 'plan.handle' ), '""', '') as plan.handle,
+replace(json_extract_path_text(try_parse_json( metadata ), 'set' ), '""', '') as set,
+```
+It's failing when the package tries to set a column name containing `.` or a reserved word. Enclosing them in quotes didn't work.
+","2022-10-10 13:41:22.000000 UTC","2022-10-10 13:41:22.000000 UTC","16354488","2024-08-07 21:43:48.420000 UTC"
+"1273538541","1383635883","No worries at all @LewisDavies thanks for sharing more information on the issue you are experiencing. Let me try and fiddle around with this a bit and see what I can come back with regarding this parsing issue. 🤔 ","2022-10-10 16:09:06.000000 UTC","2022-10-10 16:09:06.000000 UTC","74217849","2024-08-07 21:43:48.420000 UTC"
+"1273805551","1403442848","Hi @ccbrandenburg thanks so much for opening this feature request. I would agree with you that it would be beneficial to incorporate the `currency` field into the `stripe__invoice_line_items` end model. 
+
+As you pointed out, this field is available in the upstream models and wouldn't be too difficult to incorporate in the end model. I notice you are interested in contributing this feature to the package! If you would like, this would be a great feature request to open a PR to incorporate within the package. If you open a PR, my team and I will be happy to review and work with you to get the PR in a place to merge into the next release.
+
+If you are interested in opening a PR, let me know if you have any questions as I would be happy to help answer any. Otherwise, my team can pick this feature up in a future update down the line. 😄 ","2022-10-10 20:47:26.000000 UTC","2022-10-10 20:47:26.000000 UTC","74217849","2024-08-07 21:43:48.420000 UTC"
+"1274659808","1403442848","Hey @fivetran-joemarkiewicz happy to create a PR for this. 
+
+I just tried to push my commits on my branch but seem to be missing permissions. Do you need to grant me permissions to push to the repo?
+
+Any local testing I need to do or does it all run as part of the CI process?
+
+","2022-10-11 13:06:40.000000 UTC","2022-10-11 13:06:40.000000 UTC","9105859","2024-08-07 21:43:48.420000 UTC"
+"1274790027","1403442848","Hi @ccbrandenburg you will need to fork this repo and make the changes to your fork. Once your local changes look good you can open a PR to this `main` branch on this repo! 
+
+If you can do some local testing that would be great. The CI process will kick off regardless once we merge this into our repo.","2022-10-11 14:30:58.000000 UTC","2022-10-11 14:30:58.000000 UTC","74217849","2024-08-07 21:43:48.420000 UTC"
+"2166202489","2309523486","Closing this issue out since the fix was made at the connector, however if anyone runs into this issue again, please feel free to comment in this thread.","2024-06-13 16:43:52.000000 UTC","2024-06-13 16:43:52.000000 UTC","111930712","2024-08-07 21:43:49.273000 UTC"
+"1278085179","1405946157","@ccbrandenburg also FYI my team and I will be attending the Coalesce Conference next week and will be having a release freeze in place until we get back. You can expect this change to go live the week of 10/24.
+
+Thanks again so much for your contribution!!","2022-10-13 19:26:41.000000 UTC","2022-10-13 19:26:41.000000 UTC","74217849","2024-08-07 21:43:48.421000 UTC"
+"1278103631","1405946157","In the meantime, we are good to merge these changes!","2022-10-13 19:45:55.000000 UTC","2022-10-13 19:45:55.000000 UTC","74217849","2024-08-07 21:43:48.421000 UTC"
+"989003365","1053954498","Hi @peter-dimov,
+
+I hope all is well! I wanted to post back as I believe I have found a solution for this issue. When you have a free moment would you be able to test the working branch again? Essentially, I found that for a case in Redshift when we the timestamps are `timestamptz` we need to explicitly cast the data type to `timestamp without time zone`.
+
+Let me know if this works!","2021-12-08 17:08:14.000000 UTC","2021-12-08 17:08:14.000000 UTC","74217849","2024-08-07 21:43:47.657000 UTC"
+"1292676435","1408562080","- [ ] revert packages once source released
+","2022-10-26 21:32:57.000000 UTC","2022-10-26 21:32:57.000000 UTC","91097070","2024-08-07 21:43:48.421000 UTC"
+"1589941233","1751995009","Hi @nbenezri thanks for opening this issue.
+
+I understand you are wanting to bring the metadata fields through to the end models. However, we did intentionally exclude those from a number of end models in a previous release as we were being mindful of scope creep and were not sure if users wanted these fields to persist to the end models. As such, I will restructure this issue as a feature request to include the metadata columns to the end models.
+
+That being said, I believe you have the right approach for how this should be integrated into the end models in the manual code snippets you shared above. Before accepting this feature I would want to understand a bit more which metadata fields you are most interested in persisting to which downstream models. The main reason we excluded these in the first place was we found extra complexity being added and were unsure of the benefits for including the fields if we made the models more complex. Or would you prefer all metadata fields are persisted downstream to the relevant models no matter what?","2023-06-13 20:00:47.000000 UTC","2023-06-13 20:00:47.000000 UTC","74217849","2024-08-07 21:43:49.261000 UTC"
+"998238840","1053954498","Just gave it a go on thebugfix/timestamp-tz-fix branch and same date_add error
+```
+20:08:36 | 1 of 9 START table model stripe__balance_transactions [RUN]
+
+20:08:37 | 1 of 9 ERROR creating table model stripe__balance_transactions [ERROR in 0.97s]
+
+Database Error in model stripe__balance_transactions (models/stripe__balance_transactions.sql)
+  function pg_catalog.date_add(""unknown"", integer, timestamp with time zone) does not exist
+  HINT:  No function matches the given name and argument types. You may need to add explicit type casts.
+  compiled SQL at target/run/stripe/models/stripe__balance_transactions.sql
+```
+","2021-12-20 20:15:51.000000 UTC","2021-12-20 20:15:51.000000 UTC","57108096","2024-08-07 21:43:47.657000 UTC"
+"1591045205","1751995009","I thought the whole purpose was to show them at the end models.
+
+I would want whatever we configure in the vars to be visible everywhere possible (at the end models).
+
+So if I set, for example, `stripe__charge_metadata: ['col1', 'col2', 'col3', 'col4'] ` I expect to see those columns everywhere the `charge` table is used. Of course, never all the metadata columns, just what I've put in the vars.
+It can be also a path like `col1.data` (might be already supported, never tested).","2023-06-14 11:52:24.000000 UTC","2023-06-14 11:52:24.000000 UTC","82036810","2024-08-07 21:43:49.261000 UTC"
+"1591240657","1751995009","In the current build the intention was to bring these metadata columns through to the staging models so users could leverage them in their own transformations. We were unaware at the time of the implementation how relevant these fields would be to users so we decided to only bring them through to the staging models to assess their value and determine how/if they would ultimately be leveraged downstream.
+
+Your input is a huge help in regards to how users intend to leverage these fields! We will share our plans here as we continue to scope and prioritize this feature on our end. If other users are interested in this feature I would highly encourage chiming into this thread so we can understand how to best support this feature.","2023-06-14 13:45:22.000000 UTC","2023-06-14 13:45:22.000000 UTC","74217849","2024-08-07 21:43:49.261000 UTC"
+"854776947","911548885","Hi @dimoschi thanks for opening this issue!
+
+You are correct, that is incorrect zendesk referencing and must be changed to stripe. I will open a PR to fix this today. Thanks!","2021-06-04 14:36:02.000000 UTC","2021-06-04 14:36:02.000000 UTC","74217849","2024-08-07 21:43:47.636000 UTC"
+"855013019","911548885","Hi @dimoschi, thank you again for catching this issue!
+
+I have since been able to merge the PR mentioned above and cut the new `v0.4.1` release for the Stripe package which includes the updates. The release should be live on the dbt hub come Monday.
+
+I will close the Issue as we have been able to implement the quick bug fix. Please feel free to reach back out if you have any further questions.","2021-06-04 21:36:57.000000 UTC","2021-06-04 21:36:57.000000 UTC","74217849","2024-08-07 21:43:47.637000 UTC"
+"855607226","911548885","Thank you for the immediate response.","2021-06-07 05:59:45.000000 UTC","2021-06-07 05:59:45.000000 UTC","13113025","2024-08-07 21:43:47.637000 UTC"
+"857764614","916296000","@fivetran-joemarkiewicz Got a first draft of this for your review. 
+
+My personal view is that we should only incorporate the timezone when we are 'date_trunc'-ing to something that _is not_ a timestamp. I feel we should leave timestamps as UTC, and let BI tools (or users) do the final mile there if they prefer. 
+
+Therefore, I have (1) created a new macro that takes timezones into account and (2) replaced column references in that macro wherever we were converting a timestamp to a date, month, quarter, week, etc.
+
+Example config looks like:
+```yml
+vars:
+    stripe_timezone: 'America/New_York'
+```","2021-06-09 14:52:14.000000 UTC","2021-06-09 14:52:14.000000 UTC","10001014","2024-08-07 21:43:47.637000 UTC"
+"857799844","916296000","TODOs:
+
+- [x] Make this cross database compatible
+- [x] Change CI to test with timezone","2021-06-09 15:25:01.000000 UTC","2021-06-10 21:02:04.000000 UTC","10001014","2024-08-07 21:43:47.638000 UTC"
+"858082815","914743803","Thanks for opening this @MarkMacArdle!
+
+I completely agree with your Issue and PR changes and have since merged your PR with master. I am currently going to hold off cutting release `v0.4.2` for the time being as we are currently working on Issue #12 this sprint and are planning to batch the updates together in the next release.
+
+As such, I will hold off closing this ticket until we have cut the new release. I will post here once we have. Thanks!","2021-06-09 20:35:52.000000 UTC","2021-06-09 20:35:52.000000 UTC","74217849","2024-08-07 21:43:47.637000 UTC"
+"1895922607","2085728869","hey there 👋  -- so just to clarify, the below code is something you've added manually to a forked version of the `stripe__invoice_details` model?
+```sql
+    {% if var('stripe__invoice_metadata',[]) %}
+      {% for metadata in var('stripe__invoice_metadata') %}
+          ,invoice.{{ metadata }} as invoice_{{ metadata }}
+      {% endfor %}
+    {% endif %}
+```
+
+if i'm understanding that correctly, i believe you would need to adjust the above to treat `stripe__invoice_metadata` as a dictionary instead of a list. so something like
+```sql
+    {% if var('stripe__invoice_metadata',[]) %}
+      {% for metadata in var('stripe__invoice_metadata') %}
+          ,invoice.{{ metadata.alias if metadata.alias else metadata.name }} as invoice_{{ metadata.alias if metadata.alias else metadata.name }}
+      {% endfor %}
+    {% endif %}
+```","2024-01-17 14:26:14.000000 UTC","2024-01-17 14:26:14.000000 UTC","65564846","2024-08-07 21:43:49.273000 UTC"
+"1896124498","2085728869","You nailed it. 
+
+Unfortunately, it returns:
+```
+16:03:15  Database Error in model stripe__invoice_line_item_details (models/stripe__invoice_line_item_details.sql)
+16:03:15    syntax error at or near ""{""
+16:03:15    compiled Code at target/run/stripe/models/stripe__invoice_line_item_details.sql
+```","2024-01-17 16:06:47.000000 UTC","2024-01-17 16:06:47.000000 UTC","82036810","2024-08-07 21:43:49.273000 UTC"
+"859658068","841199454","@fadhguru this has been adding to our recent `v0.4.2` release of the dbt_stripe package!!
+
+This release will most likely be live on the dbt hub by Monday morning. Closing this ticket as the feature request has been integrated into the package. Please feel free to reach back out or create a new ticket if you have any further questions or requests.","2021-06-11 15:24:05.000000 UTC","2021-06-11 15:24:05.000000 UTC","74217849","2024-08-07 21:43:47.656000 UTC"
+"859658347","914743803","@MarkMacArdle this has been adding to our recent `v0.4.2` release of the dbt_stripe package!!
+
+This release will most likely be live on the dbt hub by Monday morning. Closing this ticket as the feature request has been integrated into the package. Please feel free to reach back out or create a new ticket if you have any further questions or requests.","2021-06-11 15:24:30.000000 UTC","2021-06-11 15:24:30.000000 UTC","74217849","2024-08-07 21:43:47.656000 UTC"
+"1896380656","2085728869","ah looks like you may need to make the same change in your `stripe__invoice_line_item_details` model in addition to `stripe__invoice_details`","2024-01-17 18:24:22.000000 UTC","2024-01-17 18:24:22.000000 UTC","65564846","2024-08-07 21:43:49.273000 UTC"
+"1308005734","1433425697","HI @rbrooks thanks so much for opening this issue. 
+
+We are actually actively working within PR #48 to migrate our package (and all other packages) to support the dbt-utils v1.0.0 version once it is released. You can expect this package to have full support once dbt-utils v1.0.0 is released!","2022-11-09 00:08:01.000000 UTC","2022-11-09 00:08:01.000000 UTC","74217849","2024-08-07 21:43:48.421000 UTC"
+"1310891593","1383635883","Hey @fivetran-reneeli, here are a couple of models that don't pull through the metadata fields. The logic is all there, the columns have just been excluded from the final output.
+- [stripe__subscription_details](https://fivetran.github.io/dbt_stripe/#!/model/model.stripe.stripe__subscription_details#code) doesn't include the fields added in [stg_stripe__subscription](https://fivetran.github.io/dbt_stripe/#!/model/model.stripe_source.stg_stripe__subscription#code). 
+- [stripe__invoice_line_items](https://fivetran.github.io/dbt_stripe/#!/model/model.stripe.stripe__invoice_line_items) doesn't include fields from [stg_stripe__plan](https://fivetran.github.io/dbt_stripe/#!/model/model.stripe_source.stg_stripe__plan#code).
+
+I checked `information_schema.columns` and found a lot of tables that include a metadata column. The ones at the top are populated in my data, the others are empty:
+```
+CUSTOMER
+CUSTOMER_BALANCE_TRANSACTION
+INVOICE_LINE_ITEM
+PLAN
+PRICE
+PRODUCT
+
+-------------------
+
+APPLICATION_FEE_REFUND
+BANK_ACCOUNT
+CARD
+CHARGE
+CHECKOUT_SESSION
+COUPON
+CREDIT_NOTE
+DISPUTE
+FILE_LINK
+INVOICE
+INVOICE_ITEM
+ORDER_HISTORY
+PAYMENT_INTENT
+PAYMENT_METHOD
+PAYOUT
+PROMOTION_CODE
+REFUND
+SESSION
+SETUP_INTENT
+SKU
+SOURCE
+SUBSCRIPTION_HISTORY
+SUBSCRIPTION_ITEM
+SUBSCRIPTION_SCHEDULE
+TAX_RATE
+TRANSFER
+TRANSFER_REVERSAL
+```","2022-11-10 21:05:18.000000 UTC","2022-11-10 21:05:18.000000 UTC","16354488","2024-08-07 21:43:48.421000 UTC"
+"1314090050","1447996313","Hi @LewisDavies thanks for opening this PR! 
+
+I believe the addition of the `subscription_item_id` to the `stripe__invoice_line_item` table makes sense to me and could be leveraged by others. In addition to your updates already in the PR, would you be able to include this field in the `stripe.yml` documentation for this model?
+
+Once you apply that update, I believe this may look good to move forward!","2022-11-14 17:05:54.000000 UTC","2022-11-14 17:05:54.000000 UTC","74217849","2024-08-07 21:43:48.421000 UTC"
+"1315776253","1383635883","Hi @LewisDavies ! Thank you for details and appreciate you linking the models. 
+- So summing up our slack convo, since we're making many updates to our Stripe package this quarter I plan on including the point about bringing down the metadata fields to the final models. Will be addressing the other requests you and other customers have made as well in our overhaul as well 👍 
+- As for the json values, we have the fix although it's going to be within our [fivetran utils package](https://github.com/fivetran/dbt_fivetran_utils/tree/releases/v0.4.latest), not the stripe package itself. The next release of stripe will have these updates, if you want to keep an eye out for that. Keep in mind the next stripe release is also dependent on the release of dbt v1. I will update the README for more info. ","2022-11-15 19:34:23.000000 UTC","2022-11-15 20:01:40.000000 UTC","91097070","2024-08-07 21:43:48.421000 UTC"
+"1318507723","1447996313","FYI @fivetran-joemarkiewicz Docs have been updated now","2022-11-17 11:38:14.000000 UTC","2022-11-17 11:38:14.000000 UTC","16354488","2024-08-07 21:43:48.849000 UTC"
+"1466643439","1621902855","- [ ] docs regen","2023-03-13 18:00:37.000000 UTC","2023-03-13 18:00:37.000000 UTC","91097070","2024-08-07 21:43:48.850000 UTC"
+"1319094828","1453574882","> Hey @fivetran-joemarkiewicz, good work here! The notes I have here are similar to the source pkg - please refer to the in-line comments. Additionally, I believe this change also warrants a docs regenerate.
+
+Thanks @fivetran-sheringuyen! I just applied updates off your review. Let me know if you have any questions. Also, the docs should have been regenerated from the initial PR. Let me know if you have any questions.","2022-11-17 19:21:29.000000 UTC","2022-11-17 19:21:29.000000 UTC","74217849","2024-08-07 21:43:48.849000 UTC"
+"1319307423","1447996313","@LewisDavies we will most likely be cutting a new release come Monday. I hope to get it out sooner, but we prefer to not cut releases on Friday's. You can follow the PR #52 for status on the merge and release of your changes to the package!","2022-11-17 22:47:09.000000 UTC","2022-11-17 22:47:09.000000 UTC","74217849","2024-08-07 21:43:48.849000 UTC"
+"1322768811","1450576163","@fivetran-joemarkiewicz  ready for re review
+-- oh sorry, I just saw your comments in stripe source. Will make those changes first ","2022-11-21 22:59:23.000000 UTC","2022-11-21 23:02:29.000000 UTC","91097070","2024-08-07 21:43:48.849000 UTC"
+"1322788041","1450576163","@fivetran-joemarkiewicz  ready for review!","2022-11-21 23:21:30.000000 UTC","2022-11-21 23:21:30.000000 UTC","91097070","2024-08-07 21:43:48.849000 UTC"
+"1472544519","1621902855","Thanks for the review @fivetran-catfritz! 
+-- update: actually, after talking with Joe, I think we should keep the materialization as a table because view would not solve the compute issue. Though i'm working through how to avoid having the duplicate tables, gonna see what happens if we just move what we had in the int model to the final daily overview model","2023-03-16 18:36:30.000000 UTC","2023-03-16 19:33:00.000000 UTC","91097070","2024-08-07 21:43:49.261000 UTC"
+"1028489846","1120843886","🤔 I have been looking over some of the SQL templates provided by Stripe-Sigma and see that when looking at subscription invoices and invoice line items they are applying the following filter `(invoice_line_items.source_type = 'subscription' or invoice_line_items.subscription is not null)`. I see the the package uses just the `invoice_line_item.subscription_id is not null` in the `stripe__subscription_line_items` model...
+
+When looking at my data I am seeing some inconsistencies in whether there is a `subscription_id` at the `invoice` or `invoice_line_item` level as well as the usage of `type`. 
+
+At this point I am not sure what would be the correct value to join, filter on. My current thought is there may be a reason why it is on the invoice (main line) and not on the invoice line item (line item) or vice versa in cases of multiple line items on an invoice having their own relationship with a subscription - granted I am not sure this is even possible through Stripe - I just have seen similar structures within finance systems. Stripe including the type only makes this more confusing though.
+","2022-02-03 00:35:23.000000 UTC","2022-02-03 00:38:10.000000 UTC","24665116","2024-08-07 21:43:47.657000 UTC"
+"1029098866","1120843886","This is really interesting 🤔 
+
+I wouldn't have thought that the `invoice_line_items.source_type = 'subscription'` could result in null `subscription_ids`. Let me check with the Stripe connector PM if they have any insight into this and if they can help provide any direction on this join.
+
+Thanks!","2022-02-03 15:20:53.000000 UTC","2022-02-03 15:20:53.000000 UTC","74217849","2024-08-07 21:43:48.013000 UTC"
+"1478523111","1603378228","Issue addressed in[ v0.10.0](https://github.com/fivetran/dbt_stripe/releases/tag/v0.10.0)","2023-03-21 20:13:54.000000 UTC","2023-03-21 20:13:54.000000 UTC","91097070","2024-08-07 21:43:49.261000 UTC"
+"1777825937","1959764737","HI @abine-michael-planting thanks for opening this PR. Is your intention for this to be folded into the live version of the package?","2023-10-24 18:46:05.000000 UTC","2023-10-24 18:46:05.000000 UTC","74217849","2024-08-07 21:43:49.273000 UTC"
