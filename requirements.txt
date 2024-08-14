@@ -1,1 +1,5 @@
 whyhow
+boto3
+s3fs
+numpy
+pyiceberg[s3fs,glue,pandas]

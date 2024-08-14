@@ -1,4 +1,4 @@
-"id","created_at","updated_at","number","state","title","body","locked","closed_at","repository_id","user_id","milestone_id","pull_request","_fivetran_synced"
+"issue_id","issue_created_at","issue_updated_at","issue_number","issue_state","issue_title","issue_body","issue_locked","issue_closed_at","issue_repository_id","issue_user_id","issue_milestone_id","issue_pull_request","issue__fivetran_synced"
 "744933593","2020-11-17 17:23:35.000000 UTC","2021-03-17 19:10:11.000000 UTC","3","closed","Invoice Line Item is not guaranteed to be unique","https://github.com/fivetran/dbt_stripe/blob/d1ff90c165854fe7230397bafdcc5fb99d50db47/models/stripe.yml#L314
 
 From customer:

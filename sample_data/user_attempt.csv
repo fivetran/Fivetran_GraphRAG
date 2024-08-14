@@ -1,4 +1,4 @@
-"id","login","type","site_admin","name","company","blog","location","hireable","bio","created_at","updated_at","_fivetran_synced"
+"user_id","user_login","user_type","user_site_admin","user_name","user_company","user_blog","user_location","user_hireable","user_bio","user_created_at","user_updated_at","user__fivetran_synced"
 "10824264","levonkorganyan","User","false","Levon Korganyan",,"",,,,"2015-02-03 05:18:05.000000 UTC","2024-04-25 05:26:12.000000 UTC","2024-08-07 21:45:52.323000 UTC"
 "21107674","abhijeethp","User","false","Abhijeeth Padarthi","@fivetran ","","Oakland, CA",,"May the --force be with you 👾","2016-08-18 16:15:45.000000 UTC","2024-07-17 10:40:58.000000 UTC","2024-08-07 21:45:46.382000 UTC"
 "77462104","sergeypine","User","false",,,"",,,,"2021-01-14 19:45:47.000000 UTC","2023-10-19 16:06:39.000000 UTC","2024-08-07 21:46:54.020000 UTC"
